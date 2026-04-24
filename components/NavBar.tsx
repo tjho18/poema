@@ -47,12 +47,20 @@ export default async function NavBar() {
             />
           </>
         ) : (
-          <Link
-            href="/signin"
-            className="hover:text-ink-text transition-colors duration-200"
-          >
-            Sign in
-          </Link>
+          <>
+            <Link
+              href="/signin"
+              className="hover:text-ink-text transition-colors duration-200"
+            >
+              Sign in
+            </Link>
+            <Link
+              href="/signup"
+              className="text-ink-text border border-ink-text/30 px-3 py-1 rounded hover:border-ink-text transition-colors duration-200 text-sm"
+            >
+              Sign up
+            </Link>
+          </>
         )}
       </div>
     </nav>
