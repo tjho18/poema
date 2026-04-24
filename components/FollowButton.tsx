@@ -84,10 +84,10 @@ export default function FollowButton({ poetId, initialFollowing }: Props) {
     <button
       onClick={toggle}
       disabled={loading}
-      className={`font-body italic text-sm tracking-widest transition-colors duration-200 ${
+      className={`font-body italic text-xs tracking-widest transition-colors duration-200 ${
         display === 'follow'
-          ? 'text-ink-muted/60 hover:text-ink-text'
-          : 'text-ink-muted'
+          ? 'text-ink-muted/40 hover:text-ink-muted'
+          : 'text-ink-muted/50'
       }`}
     >
       {label}

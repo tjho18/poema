@@ -63,27 +63,25 @@ export default function PoetHomeClient({
               animate={true}
             />
 
-            {/* Signature */}
-            <p className="mt-10 font-body italic text-sm text-ink-muted tracking-wider">
-              — {displayName}
-            </p>
-
-            {/* Bio — only shown if the poet has written one */}
-            {bio && (
-              <p className="mt-4 font-body italic text-xs text-ink-muted/60 text-center max-w-xs leading-relaxed">
-                {bio}
+            {/* Signature + inline follow */}
+            <div className="mt-10 flex items-baseline gap-3">
+              <p className="font-body italic text-sm text-ink-muted tracking-wider">
+                — {displayName}
               </p>
-            )}
-
-            {/* Follow — only shown to logged-out visitors or other users */}
-            {!viewerIsOwner && (
-              <div className="mt-6">
+              {!viewerIsOwner && (
                 <FollowButton
                   poetId={poetId}
                   initialFollowing={initialFollowing}
                   followerCount={0}
                 />
-              </div>
+              )}
+            </div>
+
+            {/* Bio — only shown if the poet has written one */}
+            {bio && (
+              <p className="mt-3 font-body italic text-xs text-ink-muted/60 text-center max-w-xs leading-relaxed">
+                {bio}
+              </p>
             )}
           </div>
         ) : null}
