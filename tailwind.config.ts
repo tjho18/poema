@@ -10,7 +10,7 @@ const config: Config = {
       colors: {
         ink: {
           bg:     '#ffffff',   // pure white — blank page (desktop)
-          paper:  '#F4EFE6',   // warm paper — Kindle-like, mobile only
+          paper:  '#F7F7F5',   // barely-warm off-white — book paper, mobile only
           text:   '#0a0a0a',   // near-black — fountain pen ink
           accent: '#0a0a0a',   // no separate accent; everything is black
           muted:  '#6b6b6b',   // medium gray for secondary text

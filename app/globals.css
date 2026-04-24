@@ -9,10 +9,10 @@
     color: #0a0a0a;
   }
 
-  /* Mobile: warm paper tone to reduce the clinical brightness of pure white.
-     Desktop (≥640px): pure white — works with the gradient background. */
+  /* Mobile: barely-warm off-white — just enough to evoke paper without
+     announcing itself. Desktop (≥640px): pure white for the gradient. */
   body {
-    background-color: #F4EFE6;
+    background-color: #F7F7F5;
   }
   @media (min-width: 640px) {
     body {
