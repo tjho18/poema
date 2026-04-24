@@ -113,7 +113,7 @@ function Section({ title, poems, profileUsername, deletePoem, showView }: Sectio
           >
             <div className="min-w-0 flex-1 mr-4">
               <p className="font-display italic font-semibold text-ink-text truncate">
-                {poem.title}
+                {poem.title || <span className="text-ink-muted/40 font-normal">untitled</span>}
               </p>
               <div className="flex gap-3 mt-1 flex-wrap items-baseline">
                 {poem.tags.map(tag => (

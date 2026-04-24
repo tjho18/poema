@@ -20,11 +20,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const poem = await getPoemByAuthorAndSlug(poet.id, slug)
   if (!poem) return { title: 'Not found — Poema' }
   const firstLine = poem.content.split('\n').find(l => l.trim()) ?? ''
+  const displayTitle = poem.title || firstLine || 'untitled'
+  const poetName = poet.display_name || poet.username
   return {
-    title: `${poem.title} — ${poet.display_name || poet.username}`,
+    title: `${displayTitle} — ${poetName}`,
     description: firstLine,
     openGraph: {
-      title: poem.title,
+      title: displayTitle,
       description: firstLine,
       type: 'article',
     },
@@ -67,7 +69,7 @@ export default async function PoemDetailPage({ params }: Props) {
           >
             ← all poems
           </Link>
-          <ShareButton title={poem.title} poet={displayName ?? poet.username ?? ''} />
+          <ShareButton title={poem.title || poem.content.split('\n').find(l => l.trim()) || 'a poem'} poet={displayName ?? poet.username ?? ''} />
           <Link
             href={`/${poet.username}`}
             className="font-body italic text-xs text-ink-muted/60 hover:text-ink-muted tracking-widest transition-colors"

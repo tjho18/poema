@@ -29,12 +29,14 @@ export default function PoemCard({ poem, byline, href }: Props) {
       href={target}
       className="group block px-6 py-7 rounded hover:bg-black/[0.025] transition-colors duration-300"
     >
-      <h2 className="font-display italic font-semibold text-lg text-ink-text mb-1 group-hover:opacity-70 transition-opacity duration-200">
-        {poem.title}
-      </h2>
+      {poem.title && (
+        <h2 className="font-display italic font-semibold text-lg text-ink-text mb-1 group-hover:opacity-70 transition-opacity duration-200">
+          {poem.title}
+        </h2>
+      )}
 
       {byline && (
-        <p className="font-body italic text-xs text-ink-muted/70 mb-4">
+        <p className={`font-body italic text-xs text-ink-muted/70 mb-4 ${poem.title ? '' : 'mt-0'}`}>
           — {byline.displayName || byline.username}
         </p>
       )}

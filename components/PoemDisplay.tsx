@@ -29,10 +29,12 @@ export default function PoemDisplay({
 
   return (
     <article key={key} className="max-w-lg mx-auto px-6 text-center select-text">
-      {/* Title: large italic Garamond — the only distinction from body is size + italic weight */}
-      <h1 className="font-display italic font-semibold text-2xl md:text-3xl text-ink-text mb-10 tracking-wide">
-        {title}
-      </h1>
+      {/* Title: only rendered when the poem has one */}
+      {title && (
+        <h1 className="font-display italic font-semibold text-2xl md:text-3xl text-ink-text mb-10 tracking-wide">
+          {title}
+        </h1>
+      )}
 
       {/* Poem body: regular Garamond, generous line height.
           Empty lines become stanza-break spacers so the poet's

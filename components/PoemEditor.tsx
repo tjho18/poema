@@ -22,7 +22,6 @@ export default function PoemEditor({ initialData, action, editing = false }: Pro
           id="title"
           name="title"
           type="text"
-          required
           defaultValue={initialData?.title ?? ''}
           placeholder="The title of the poem"
           className="w-full bg-transparent border-b border-ink-text/30 pb-2 text-ink-text font-display italic text-xl focus:outline-none focus:border-ink-text transition-colors placeholder:text-ink-muted/40"
