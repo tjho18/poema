@@ -54,48 +54,55 @@ export default function HomeHeroClient({ poems }: Props) {
 
   return (
     <section
-      className="min-h-[90vh] flex flex-col items-center justify-center w-full pt-24 pb-8 relative"
+      className="min-h-[90vh] flex flex-col items-center w-full pt-24 pb-10"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
+      {/* Poem — takes all available vertical space, centred within it */}
       <div className="flex-1 flex items-center justify-center w-full">
         {currentPoem ? (
-          <div className="flex flex-col items-center">
-            <PoemDisplay
-              title={currentPoem.title}
-              content={currentPoem.content}
-              tags={currentPoem.tags}
-              animate={true}
-            />
-            <p className="mt-10 font-body italic text-sm text-ink-muted tracking-wider">
-              — <Link
-                href={`/${currentPoem.author_username}`}
-                className="hover:text-ink-text transition-colors"
-              >
-                {currentPoem.author_display_name || currentPoem.author_username}
-              </Link>
-            </p>
-          </div>
+          <PoemDisplay
+            title={currentPoem.title}
+            content={currentPoem.content}
+            tags={currentPoem.tags}
+            animate={true}
+          />
         ) : null}
       </div>
 
-      {/* Share + scroll hint — stacked, mobile only */}
-      <div className="sm:hidden absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
-        {currentPoem?.slug && (
-          <ShareButton
-            title={currentPoem.title}
-            poet={currentPoem.author_display_name || currentPoem.author_username}
-            url={`${typeof window !== 'undefined' ? window.location.origin : ''}/${currentPoem.author_username}/p/${currentPoem.slug}`}
-            className="text-ink-muted/30 hover:text-ink-muted/60 transition-colors"
-            iconOnly
-          />
-        )}
-        <div className="animate-bounce text-ink-muted/25 pointer-events-none">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 5v14M5 12l7 7 7-7" />
-          </svg>
+      {/* Bottom strip — author + mobile actions, always in normal flow */}
+      {currentPoem && (
+        <div className="flex flex-col items-center mt-10 gap-5">
+          {/* Author byline */}
+          <p className="font-body italic text-sm text-ink-muted tracking-wider">
+            —{' '}
+            <Link
+              href={`/${currentPoem.author_username}`}
+              className="hover:text-ink-text transition-colors"
+            >
+              {currentPoem.author_display_name || currentPoem.author_username}
+            </Link>
+          </p>
+
+          {/* Mobile-only: share icon + scroll hint */}
+          <div className="sm:hidden flex flex-col items-center gap-4">
+            {currentPoem.slug && (
+              <ShareButton
+                title={currentPoem.title}
+                poet={currentPoem.author_display_name || currentPoem.author_username}
+                url={`${typeof window !== 'undefined' ? window.location.origin : ''}/${currentPoem.author_username}/p/${currentPoem.slug}`}
+                className="text-ink-muted/30 hover:text-ink-muted/60 transition-colors"
+                iconOnly
+              />
+            )}
+            <div className="animate-bounce text-ink-muted/20 pointer-events-none">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 5v14M5 12l7 7 7-7" />
+              </svg>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </section>
   )
 }
