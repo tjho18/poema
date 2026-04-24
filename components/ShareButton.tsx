@@ -6,10 +6,11 @@ interface Props {
   title: string
   poet: string
   className?: string
-  url?: string  // override URL; defaults to current page
+  url?: string      // override URL; defaults to current page
+  iconOnly?: boolean // render paper-plane icon instead of text
 }
 
-export default function ShareButton({ title, poet, className, url: urlProp }: Props) {
+export default function ShareButton({ title, poet, className, url: urlProp, iconOnly }: Props) {
   const [copied, setCopied] = useState(false)
 
   async function handleShare() {
@@ -34,6 +35,29 @@ export default function ShareButton({ title, poet, className, url: urlProp }: Pr
     } catch {
       // Clipboard blocked — silently fail
     }
+  }
+
+  if (iconOnly) {
+    return (
+      <button
+        onClick={handleShare}
+        aria-label="Share this poem"
+        className={className ?? 'text-ink-muted/30 hover:text-ink-muted/60 transition-colors'}
+      >
+        {copied ? (
+          // Tiny checkmark feedback
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 6L9 17l-5-5" />
+          </svg>
+        ) : (
+          // Paper plane
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 2L11 13" />
+            <path d="M22 2L15 22l-4-9-9-4 20-7z" />
+          </svg>
+        )}
+      </button>
+    )
   }
 
   return (

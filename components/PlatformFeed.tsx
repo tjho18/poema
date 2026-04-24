@@ -51,7 +51,7 @@ export default function PlatformFeed({ poems }: Props) {
             {potd.title}
           </h2>
         )}
-        <div className="font-body text-ink-text text-base leading-loose whitespace-pre-line mb-6 line-clamp-5">
+        <div className="font-body text-ink-text text-base leading-loose whitespace-pre-line mb-6">
           {potd.content}
         </div>
         <p className="font-body italic text-sm text-ink-muted tracking-wider">

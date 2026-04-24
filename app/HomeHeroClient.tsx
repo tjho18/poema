@@ -79,22 +79,22 @@ export default function HomeHeroClient({ poems }: Props) {
         ) : null}
       </div>
 
-      <div className="flex flex-col items-center gap-5 mt-12">
+      {/* Share + scroll hint — stacked, mobile only */}
+      <div className="sm:hidden absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
         {currentPoem?.slug && (
           <ShareButton
             title={currentPoem.title}
             poet={currentPoem.author_display_name || currentPoem.author_username}
             url={`${typeof window !== 'undefined' ? window.location.origin : ''}/${currentPoem.author_username}/p/${currentPoem.slug}`}
-            className="font-body italic text-sm text-ink-muted/60 hover:text-ink-muted transition-colors tracking-widest"
+            className="text-ink-muted/30 hover:text-ink-muted/60 transition-colors"
+            iconOnly
           />
         )}
-      </div>
-
-      {/* Scroll hint — mobile only, fades after first scroll */}
-      <div className="sm:hidden absolute bottom-6 left-1/2 -translate-x-1/2 animate-bounce text-ink-muted/25 pointer-events-none">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 5v14M5 12l7 7 7-7" />
-        </svg>
+        <div className="animate-bounce text-ink-muted/25 pointer-events-none">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 5v14M5 12l7 7 7-7" />
+          </svg>
+        </div>
       </div>
     </section>
   )
