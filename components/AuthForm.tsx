@@ -16,7 +16,6 @@ export default function AuthForm({ mode }: Props) {
   const search = useSearchParams()
   const nextParam = search.get('next') ?? '/'
 
-  const [method, setMethod]     = useState<'password' | 'magic'>('password')
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [error, setError]       = useState('')
@@ -47,18 +46,6 @@ export default function AuthForm({ mode }: Props) {
     e.preventDefault()
     setError(''); setInfo(''); setLoading(true)
 
-    if (method === 'magic') {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: redirectTo },
-      })
-      setLoading(false)
-      if (error) { setError(error.message); return }
-      setInfo('Check your inbox for a sign-in link.')
-      return
-    }
-
-    // password
     if (mode === 'signup') {
       const { error } = await supabase.auth.signUp({
         email, password,
@@ -106,32 +93,6 @@ export default function AuthForm({ mode }: Props) {
           <span className="flex-1 h-px bg-ink-text/10" />
         </div>
 
-        {/* Method toggle */}
-        <div className="flex justify-center gap-5 mb-6 text-xs tracking-widest">
-          <button
-            type="button"
-            onClick={() => setMethod('password')}
-            className={
-              method === 'password'
-                ? 'text-ink-text border-b border-ink-text pb-px'
-                : 'italic text-ink-muted hover:text-ink-text transition-colors'
-            }
-          >
-            password
-          </button>
-          <button
-            type="button"
-            onClick={() => setMethod('magic')}
-            className={
-              method === 'magic'
-                ? 'text-ink-text border-b border-ink-text pb-px'
-                : 'italic text-ink-muted hover:text-ink-text transition-colors'
-            }
-          >
-            magic link
-          </button>
-        </div>
-
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label htmlFor="email" className="block font-body text-sm text-ink-muted mb-1.5">
@@ -147,22 +108,20 @@ export default function AuthForm({ mode }: Props) {
             />
           </div>
 
-          {method === 'password' && (
-            <div>
-              <label htmlFor="password" className="block font-body text-sm text-ink-muted mb-1.5">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                required
-                minLength={6}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                className="w-full bg-transparent border border-ink-text/25 rounded px-4 py-2.5 text-ink-text font-body text-base focus:outline-none focus:border-ink-text transition-colors"
-              />
-            </div>
-          )}
+          <div>
+            <label htmlFor="password" className="block font-body text-sm text-ink-muted mb-1.5">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              required
+              minLength={6}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              className="w-full bg-transparent border border-ink-text/25 rounded px-4 py-2.5 text-ink-text font-body text-base focus:outline-none focus:border-ink-text transition-colors"
+            />
+          </div>
 
           {error && <p className="text-red-700 font-body text-sm">{error}</p>}
           {info  && <p className="font-body italic text-ink-muted text-sm">{info}</p>}
@@ -172,13 +131,7 @@ export default function AuthForm({ mode }: Props) {
             disabled={loading}
             className="w-full border border-ink-text text-ink-text font-body px-4 py-2.5 rounded text-sm tracking-wider hover:bg-ink-text hover:text-white transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {loading
-              ? '…'
-              : method === 'magic'
-                ? 'Email me a link'
-                : mode === 'signup'
-                  ? 'Create account'
-                  : 'Sign in'}
+            {loading ? '…' : mode === 'signup' ? 'Create account' : 'Sign in'}
           </button>
         </form>
 
