@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import PoemDisplay from '@/components/PoemDisplay'
 import ShareButton from '@/components/ShareButton'
@@ -32,6 +32,8 @@ export default function PoetHomeClient({
   initialFollowing,
 }: Props) {
   const [currentPoem, setCurrentPoem] = useState<Poem | null>(null)
+  const touchStartX = useRef(0)
+  const touchStartY = useRef(0)
 
   const cyclePoem = useCallback(() => {
     const next = pickRandom(poems, currentPoem?.id)
@@ -41,6 +43,19 @@ export default function PoetHomeClient({
   useEffect(() => {
     setCurrentPoem(pickRandom(poems))
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    const dx = e.changedTouches[0].clientX - touchStartX.current
+    const dy = e.changedTouches[0].clientY - touchStartY.current
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 60) {
+      cyclePoem()
+    }
+  }
 
   if (poems.length === 0) {
     return (
@@ -52,7 +67,11 @@ export default function PoetHomeClient({
   }
 
   return (
-    <section className="min-h-[80vh] flex flex-col items-center justify-center w-full pt-24 pb-12">
+    <section
+      className="min-h-[80vh] flex flex-col items-center justify-center w-full pt-24 pb-12"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       <div className="flex-1 flex items-center justify-center w-full">
         {currentPoem ? (
           <div className="flex flex-col items-center">
