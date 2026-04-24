@@ -50,7 +50,7 @@ export default async function NavBar() {
           <>
             <Link
               href="/signin"
-              className="text-xs sm:text-sm text-ink-muted/70 sm:text-ink-muted hover:text-ink-text transition-colors duration-200"
+              className="hidden sm:inline text-sm text-ink-muted/70 sm:text-ink-muted hover:text-ink-text transition-colors duration-200"
             >
               Sign in
             </Link>
