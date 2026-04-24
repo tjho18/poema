@@ -3,6 +3,7 @@ import HomeHeroClient from './HomeHeroClient'
 import NavBar from '@/components/NavBar'
 import GradientBackground from '@/components/GradientBackground'
 import PlatformFeed from '@/components/PlatformFeed'
+import FadeInSection from '@/components/FadeInSection'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,7 +15,9 @@ export default async function HomePage() {
       <GradientBackground />
       <NavBar />
       <HomeHeroClient poems={heroPool} />
-      <PlatformFeed poems={heroPool} />
+      <FadeInSection className="w-full">
+        <PlatformFeed poems={heroPool} />
+      </FadeInSection>
     </main>
   )
 }

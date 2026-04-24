@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import PoemDisplay from '@/components/PoemDisplay'
 import ShareButton from '@/components/ShareButton'
@@ -18,6 +18,8 @@ function pickRandom(poems: PublicPoem[], excludeId?: string): PublicPoem | null 
 
 export default function HomeHeroClient({ poems }: Props) {
   const [currentPoem, setCurrentPoem] = useState<PublicPoem | null>(null)
+  const touchStartX = useRef(0)
+  const touchStartY = useRef(0)
 
   const cyclePoem = useCallback(() => {
     const next = pickRandom(poems, currentPoem?.id)
@@ -28,6 +30,20 @@ export default function HomeHeroClient({ poems }: Props) {
     setCurrentPoem(pickRandom(poems))
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    const dx = e.changedTouches[0].clientX - touchStartX.current
+    const dy = e.changedTouches[0].clientY - touchStartY.current
+    // Only fire if horizontal swipe clearly dominates and is long enough
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 60) {
+      cyclePoem()
+    }
+  }
+
   if (poems.length === 0) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center">
@@ -37,7 +53,11 @@ export default function HomeHeroClient({ poems }: Props) {
   }
 
   return (
-    <section className="min-h-[80vh] flex flex-col items-center justify-center w-full pt-24">
+    <section
+      className="min-h-[90vh] flex flex-col items-center justify-center w-full pt-24 pb-8 relative"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       <div className="flex-1 flex items-center justify-center w-full">
         {currentPoem ? (
           <div className="flex flex-col items-center">
@@ -59,7 +79,7 @@ export default function HomeHeroClient({ poems }: Props) {
         ) : null}
       </div>
 
-      <div className="flex flex-col items-center gap-5 mt-16">
+      <div className="flex flex-col items-center gap-5 mt-12">
         <button
           onClick={cyclePoem}
           className="font-body italic text-sm text-ink-muted/60 hover:text-ink-muted transition-colors tracking-widest"
@@ -75,6 +95,13 @@ export default function HomeHeroClient({ poems }: Props) {
             className="font-body italic text-sm text-ink-muted/60 hover:text-ink-muted transition-colors tracking-widest"
           />
         )}
+      </div>
+
+      {/* Scroll hint — mobile only, fades after first scroll */}
+      <div className="sm:hidden absolute bottom-6 left-1/2 -translate-x-1/2 animate-bounce text-ink-muted/25 pointer-events-none">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 5v14M5 12l7 7 7-7" />
+        </svg>
       </div>
     </section>
   )

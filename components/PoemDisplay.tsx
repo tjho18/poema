@@ -31,7 +31,7 @@ export default function PoemDisplay({
     <article key={key} className="max-w-lg mx-auto px-6 text-center select-text">
       {/* Title: only rendered when the poem has one */}
       {title && (
-        <h1 className="font-display italic font-semibold text-2xl md:text-3xl text-ink-text mb-10 tracking-wide">
+        <h1 className="font-display italic font-semibold text-xl sm:text-2xl md:text-3xl text-ink-text mb-10 tracking-wide">
           {title}
         </h1>
       )}
@@ -39,7 +39,7 @@ export default function PoemDisplay({
       {/* Poem body: regular Garamond, generous line height.
           Empty lines become stanza-break spacers so the poet's
           intentional breathing room is preserved on screen. */}
-      <div className="font-body text-lg md:text-xl leading-loose text-ink-text">
+      <div className="font-body text-base sm:text-lg md:text-xl leading-loose text-ink-text">
         {lines.map((line, i) =>
           line.trim() === '' ? (
             // Stanza break — visible gap between stanzas
