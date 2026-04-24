@@ -1,13 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { useFormStatus } from 'react-dom'
+import { useRef, useState } from 'react'
 import type { Poem } from '@/types/poem'
 
 interface Props {
   initialData?: Poem
-  // Server action receives the FormData. The "intent" field tells it whether
-  // to save as draft or publish.
   action: (formData: FormData) => Promise<void>
   editing?: boolean
 }
@@ -38,72 +36,28 @@ function Spinner() {
   )
 }
 
-interface FormActionsProps {
-  editing: boolean
-  initialStatus?: string
-}
-
-function FormActions({ editing, initialStatus }: FormActionsProps) {
-  const { pending, data } = useFormStatus()
-  const pendingIntent = pending ? (data?.get('intent') as string | null) : null
-
-  return (
-    <div className="flex items-center gap-5 pt-4 border-t border-ink-text/10">
-      {/* Save draft */}
-      <div className="flex items-center gap-2.5">
-        <button
-          type="submit"
-          name="intent"
-          value="draft"
-          disabled={pending}
-          className={`border border-ink-text/30 text-ink-muted font-body px-5 py-2 rounded text-sm tracking-wider transition-all duration-200 ${
-            pending
-              ? 'opacity-40 cursor-not-allowed'
-              : 'hover:border-ink-text hover:text-ink-text'
-          }`}
-        >
-          Save draft
-        </button>
-        {pendingIntent === 'draft' && (
-          <span className="text-ink-muted/50">
-            <Spinner />
-          </span>
-        )}
-      </div>
-
-      {/* Publish */}
-      <div className="flex items-center gap-2.5">
-        <button
-          type="submit"
-          name="intent"
-          value="publish"
-          disabled={pending}
-          className={`border border-ink-text bg-ink-text text-white font-body px-7 py-2 rounded text-sm tracking-wider transition-all duration-200 ${
-            pending ? 'opacity-40 cursor-not-allowed' : 'hover:opacity-80'
-          }`}
-        >
-          {editing && initialStatus === 'published' ? 'Save changes' : 'Publish'}
-        </button>
-        {pendingIntent === 'publish' && (
-          <span className="text-ink-muted/50">
-            <Spinner />
-          </span>
-        )}
-      </div>
-
-      <Link
-        href="/dashboard"
-        className="ml-auto font-body italic text-sm text-ink-muted hover:text-ink-text transition-colors"
-      >
-        cancel
-      </Link>
-    </div>
-  )
-}
-
 export default function PoemEditor({ initialData, action, editing = false }: Props) {
+  const [pendingIntent, setPendingIntent] = useState<string | null>(null)
+  const formRef = useRef<HTMLFormElement>(null)
+
+  async function handleSubmit(intent: string) {
+    if (pendingIntent) return
+    const form = formRef.current
+    if (!form) return
+    const formData = new FormData(form)
+    formData.set('intent', intent)
+    setPendingIntent(intent)
+    try {
+      await action(formData)
+    } finally {
+      setPendingIntent(null)
+    }
+  }
+
+  const isPending = !!pendingIntent
+
   return (
-    <form action={action} className="space-y-7 max-w-2xl">
+    <form ref={formRef} className="space-y-7 max-w-2xl">
       <div>
         <label htmlFor="title" className="block font-body italic text-sm text-ink-muted mb-2">
           Title
@@ -134,7 +88,50 @@ export default function PoemEditor({ initialData, action, editing = false }: Pro
         />
       </div>
 
-      <FormActions editing={editing} initialStatus={initialData?.status} />
+      <div className="flex items-center gap-5 pt-4 border-t border-ink-text/10">
+        {/* Save draft */}
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={() => handleSubmit('draft')}
+            className={`border border-ink-text/30 text-ink-muted font-body px-5 py-2 rounded text-sm tracking-wider transition-all duration-200 ${
+              isPending
+                ? 'opacity-40 cursor-not-allowed'
+                : 'hover:border-ink-text hover:text-ink-text'
+            }`}
+          >
+            Save draft
+          </button>
+          {pendingIntent === 'draft' && (
+            <span className="text-ink-muted/50"><Spinner /></span>
+          )}
+        </div>
+
+        {/* Publish */}
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={() => handleSubmit('publish')}
+            className={`border border-ink-text bg-ink-text text-white font-body px-7 py-2 rounded text-sm tracking-wider transition-all duration-200 ${
+              isPending ? 'opacity-40 cursor-not-allowed' : 'hover:opacity-80'
+            }`}
+          >
+            {editing && initialData?.status === 'published' ? 'Save changes' : 'Publish'}
+          </button>
+          {pendingIntent === 'publish' && (
+            <span className="text-ink-muted/50"><Spinner /></span>
+          )}
+        </div>
+
+        <Link
+          href="/dashboard"
+          className="ml-auto font-body italic text-sm text-ink-muted hover:text-ink-text transition-colors"
+        >
+          cancel
+        </Link>
+      </div>
     </form>
   )
 }
