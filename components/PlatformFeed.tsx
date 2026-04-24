@@ -25,8 +25,8 @@ export default function PlatformFeed({ poems }: Props) {
   return (
     <section className="w-full max-w-xl mx-auto mt-24 mb-16">
 
-      {/* ── Explore heading ── */}
-      <div className="flex items-center gap-4 mb-10">
+      {/* ── Explore heading — desktop only ── */}
+      <div className="hidden sm:flex items-center gap-4 mb-10">
         <span className="flex-1 h-px bg-ink-text/10" />
         <Link
           href="/explore"
