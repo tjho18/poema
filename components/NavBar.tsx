@@ -58,7 +58,7 @@ export default async function NavBar() {
               href="/signup"
               className="text-xs sm:text-sm text-ink-text border border-ink-text/20 sm:border-ink-text/30 px-2 py-0.5 sm:px-3 sm:py-1 rounded hover:border-ink-text transition-colors duration-200"
             >
-              Sign up
+              Get started
             </Link>
           </>
         )}
