@@ -80,13 +80,6 @@ export default function HomeHeroClient({ poems }: Props) {
       </div>
 
       <div className="flex flex-col items-center gap-5 mt-12">
-        <button
-          onClick={cyclePoem}
-          className="font-body italic text-sm text-ink-muted/60 hover:text-ink-muted transition-colors tracking-widest"
-        >
-          another poem
-        </button>
-
         {currentPoem?.slug && (
           <ShareButton
             title={currentPoem.title}

@@ -44,7 +44,7 @@ export default function PlatformFeed({ poems }: Props) {
 
       <Link
         href={`/${potd.author_username}/p/${potd.slug}`}
-        className="group block text-center px-6 py-10 mb-14 rounded-sm border border-ink-text/10 hover:border-ink-text/25 transition-colors duration-300"
+        className="group block text-center px-6 py-10 mb-14 border-t border-ink-text/10 sm:rounded-sm sm:border sm:border-ink-text/10 sm:hover:border-ink-text/25 transition-colors duration-300"
       >
         {potd.title && (
           <h2 className="font-display italic font-semibold text-2xl text-ink-text mb-6 tracking-wide group-hover:opacity-70 transition-opacity duration-200">
@@ -62,12 +62,6 @@ export default function PlatformFeed({ poems }: Props) {
       {/* ── More poems ── */}
       {rest.length > 0 && (
         <>
-          <div className="flex items-center gap-4 mb-10 text-ink-muted/40 text-xs italic tracking-widest">
-            <span className="flex-1 h-px bg-ink-text/8" />
-            more poems
-            <span className="flex-1 h-px bg-ink-text/8" />
-          </div>
-
           <div className="divide-y divide-ink-text/10">
             {rest.map(p => (
               <PoemCard
