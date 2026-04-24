@@ -47,13 +47,18 @@ export default function AuthForm({ mode }: Props) {
     setError(''); setInfo(''); setLoading(true)
 
     if (mode === 'signup') {
-      const { error } = await supabase.auth.signUp({
-        email, password,
-        options: { emailRedirectTo: redirectTo },
-      })
-      setLoading(false)
-      if (error) { setError(error.message); return }
+      const { data, error } = await supabase.auth.signUp({ email, password })
+      if (error) { setError(error.message); setLoading(false); return }
+      // Email verification is disabled — session is live immediately.
+      // Middleware will redirect to /onboarding/username if no username yet.
+      if (data.session) {
+        router.push(nextParam || '/')
+        router.refresh()
+        return
+      }
+      // Fallback: verification still somehow required
       setInfo('Account created. Check your email to confirm, then sign in.')
+      setLoading(false)
       return
     }
 
