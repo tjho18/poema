@@ -16,6 +16,9 @@ export default async function ExplorePage() {
     .order('created_at',   { ascending: false })
 
   const poems: PublicPoem[] = error ? [] : ((data ?? []) as PublicPoem[])
+    .map(p => ({ p, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ p }) => p)
 
   return (
     <div className="min-h-screen px-4 sm:px-6 pt-20 pb-16 sm:py-24">
