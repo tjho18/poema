@@ -20,6 +20,17 @@ export const metadata: Metadata = {
     siteName: 'Poema',
     type: 'website',
   },
+  // PWA
+  applicationName: 'Poema',
+  appleWebApp: {
+    capable: true,
+    title: 'Poema',
+    statusBarStyle: 'default',
+  },
+  formatDetection: { telephone: false },
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
 }
 
 export default function RootLayout({
@@ -29,6 +40,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={garamond.variable}>
+      <head>
+        {/* Apple PWA icons — one per common size */}
+        <link rel="apple-touch-icon" sizes="180x180" href="/api/icon/180" />
+        <link rel="apple-touch-icon" sizes="152x152" href="/api/icon/152" />
+        <link rel="apple-touch-icon" sizes="167x167" href="/api/icon/167" />
+        <meta name="theme-color" content="#F7F7F5" />
+      </head>
       <body className="bg-ink-bg text-ink-text min-h-screen antialiased">
         {children}
       </body>

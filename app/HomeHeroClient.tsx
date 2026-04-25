@@ -91,6 +91,8 @@ export default function HomeHeroClient({ poems }: Props) {
                 title={currentPoem.title}
                 poet={currentPoem.author_display_name || currentPoem.author_username}
                 url={`${typeof window !== 'undefined' ? window.location.origin : ''}/${currentPoem.author_username}/p/${currentPoem.slug}`}
+                username={currentPoem.author_username}
+                slug={currentPoem.slug}
                 className="text-ink-muted/30 hover:text-ink-muted/60 transition-colors"
                 iconOnly
               />
