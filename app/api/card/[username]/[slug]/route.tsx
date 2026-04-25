@@ -1,5 +1,12 @@
 import { ImageResponse } from 'next/og'
-import { NextRequest } from 'next/server'
+import type { NextRequest } from 'next/server'
+
+type FontEntry = {
+  data: ArrayBuffer
+  name: string
+  weight?: 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900
+  style?: 'normal' | 'italic'
+}
 
 export const runtime = 'edge'
 
@@ -52,8 +59,7 @@ export async function GET(
 
   // Load fonts — wrapped so a Google Fonts failure degrades gracefully
   // (Satori falls back to Noto if no fonts are registered)
-  type FontDef = { name: string; data: ArrayBuffer; style: 'normal' | 'italic'; weight: number }
-  let fonts: FontDef[] = []
+  let fonts: FontEntry[] = []
   try {
     const [regularFont, italicFont, semiboldItalicFont] = await Promise.all([
       loadFont(false, 400),
