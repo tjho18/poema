@@ -50,12 +50,24 @@ export async function GET(
   const truncated = allLines.length > MAX_LINES
   const lines = truncated ? allLines.slice(0, MAX_LINES) : allLines
 
-  // Load fonts in parallel
-  const [regularFont, italicFont, semiboldItalicFont] = await Promise.all([
-    loadFont(false, 400),
-    loadFont(true,  400),
-    loadFont(true,  600),
-  ])
+  // Load fonts — wrapped so a Google Fonts failure degrades gracefully
+  // (Satori falls back to Noto if no fonts are registered)
+  type FontDef = { name: string; data: ArrayBuffer; style: 'normal' | 'italic'; weight: number }
+  let fonts: FontDef[] = []
+  try {
+    const [regularFont, italicFont, semiboldItalicFont] = await Promise.all([
+      loadFont(false, 400),
+      loadFont(true,  400),
+      loadFont(true,  600),
+    ])
+    fonts = [
+      { name: 'EB Garamond', data: regularFont,        style: 'normal', weight: 400 },
+      { name: 'EB Garamond', data: italicFont,         style: 'italic', weight: 400 },
+      { name: 'EB Garamond', data: semiboldItalicFont, style: 'italic', weight: 600 },
+    ]
+  } catch {
+    // Font loading failed — card renders with system serif fallback
+  }
 
   return new ImageResponse(
     (
@@ -165,11 +177,7 @@ export async function GET(
     {
       width: 1080,
       height: 1350,
-      fonts: [
-        { name: 'EB Garamond', data: regularFont,       style: 'normal', weight: 400 },
-        { name: 'EB Garamond', data: italicFont,        style: 'italic', weight: 400 },
-        { name: 'EB Garamond', data: semiboldItalicFont, style: 'italic', weight: 600 },
-      ],
+      fonts,
     },
   )
 }
