@@ -84,6 +84,27 @@ export default function HomeHeroClient({ poems }: Props) {
             </Link>
           </p>
 
+          {/* Desktop-only: text actions in a row */}
+          <div className="hidden sm:flex items-center gap-2 text-ink-muted/50">
+            <button
+              onClick={cyclePoem}
+              className="font-body italic text-sm hover:text-ink-muted transition-colors tracking-wider"
+            >
+              surprise me
+            </button>
+            {currentPoem.slug && (
+              <>
+                <span className="text-ink-muted/25 select-none">·</span>
+                <ShareButton
+                  title={currentPoem.title}
+                  poet={currentPoem.author_display_name || currentPoem.author_username}
+                  url={`${typeof window !== 'undefined' ? window.location.origin : ''}/${currentPoem.author_username}/p/${currentPoem.slug}`}
+                  className="font-body italic text-sm hover:text-ink-muted transition-colors tracking-wider"
+                />
+              </>
+            )}
+          </div>
+
           {/* Mobile-only: share icon + scroll hint */}
           <div className="sm:hidden flex flex-col items-center gap-4">
             {currentPoem.slug && (

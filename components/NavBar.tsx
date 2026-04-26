@@ -13,9 +13,21 @@ export default async function NavBar() {
     <nav className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between px-4 sm:px-8 py-4 bg-white/90 backdrop-blur-sm border-b border-ink-text/10">
       <Link
         href="/"
-        className="font-display italic text-xl tracking-widest text-ink-text hover:opacity-60 transition-opacity"
+        className="flex items-center gap-2.5 hover:opacity-60 transition-opacity"
       >
-        Poema
+        {/* Pen icon */}
+        <span className="flex items-center justify-center w-7 h-7 rounded-md flex-shrink-0" style={{ backgroundColor: '#F0E8D5' }}>
+          <svg viewBox="0 0 400 400" width="28" height="28">
+            <g transform="translate(200,205) rotate(-42) scale(1.5) translate(-10,-100)">
+              <path d="M 0,14 A 10,14 0 0 1 20,14 L 20,162 L 17,182 L 14,200 L 10,212 L 6,200 L 3,182 L 0,162 Z" fill="#1A1A2E"/>
+              <rect x="14" y="17" width="4" height="138" rx="2" fill="#252440" opacity="0.5"/>
+              <rect x="21" y="5" width="5.5" height="76" rx="2.75" fill="#C5865D"/>
+              <circle cx="23.75" cy="83" r="4.5" fill="#C5865D"/>
+              <circle cx="10" cy="212" r="4" fill="#C5865D"/>
+            </g>
+          </svg>
+        </span>
+        <span className="font-display italic text-xl tracking-widest text-ink-text">Poema</span>
       </Link>
 
       <div className="flex items-center gap-5 sm:gap-7 text-sm text-ink-muted tracking-wider">

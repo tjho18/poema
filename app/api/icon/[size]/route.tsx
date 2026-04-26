@@ -13,8 +13,7 @@ export async function GET(
     return new Response('Invalid size', { status: 400 })
   }
 
-  const fontSize = Math.round(size * 0.65)
-  const radius   = Math.round(size * 0.18)
+  const radius = Math.round(size * 0.22)
 
   return new ImageResponse(
     (
@@ -25,22 +24,23 @@ export async function GET(
           display:         'flex',
           alignItems:      'center',
           justifyContent:  'center',
-          backgroundColor: '#F7F7F5',
+          backgroundColor: '#F0E8D5',
           borderRadius:    radius,
-          fontFamily:      'Georgia, serif',
         }}
       >
-        <div
-          style={{
-            fontSize,
-            fontStyle:  'italic',
-            color:      '#0a0a0a',
-            lineHeight: 1,
-            marginTop:  Math.round(size * 0.05), // optical centering
-          }}
-        >
-          P
-        </div>
+        {/* Pen SVG — same paths as app/icon.svg */}
+        <svg viewBox="0 0 400 400" width={size} height={size}>
+          <g transform="translate(200,205) rotate(-42) scale(1.5) translate(-10,-100)">
+            <path
+              d="M 0,14 A 10,14 0 0 1 20,14 L 20,162 L 17,182 L 14,200 L 10,212 L 6,200 L 3,182 L 0,162 Z"
+              fill="#1A1A2E"
+            />
+            <rect x="14" y="17" width="4" height="138" rx="2" fill="#252440" opacity="0.5" />
+            <rect x="21" y="5" width="5.5" height="76" rx="2.75" fill="#C5865D" />
+            <circle cx="23.75" cy="83" r="4.5" fill="#C5865D" />
+            <circle cx="10" cy="212" r="4" fill="#C5865D" />
+          </g>
+        </svg>
       </div>
     ),
     { width: size, height: size },
