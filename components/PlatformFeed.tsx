@@ -67,7 +67,6 @@ export default function PlatformFeed({ poems }: Props) {
               <PoemCard
                 key={p.id}
                 poem={p}
-                byline={{ username: p.author_username, displayName: p.author_display_name }}
               />
             ))}
           </div>

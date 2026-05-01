@@ -1,12 +1,10 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { requireUser } from '@/lib/auth'
 import { ensureUniqueSlug } from '@/lib/slug'
 import { generateTags } from '@/lib/tags'
-import PoemEditor from '@/components/PoemEditor'
-import NavBar from '@/components/NavBar'
+import WriteEditor from '@/components/WriteEditor'
 
 export const metadata = { title: 'Write — Poema' }
 export const dynamic  = 'force-dynamic'
@@ -20,14 +18,13 @@ export default async function WritePage() {
     const { data: { user: me } } = await supabase.auth.getUser()
     if (!me) redirect('/signin')
 
-    const title   = (formData.get('title') as string).trim()
-    const content = (formData.get('content') as string)
+    const title   = (formData.get('title') as string ?? '').trim()
+    const content = (formData.get('content') as string ?? '')
     const intent  = formData.get('intent') as string
 
-    const slug = await ensureUniqueSlug(supabase, me.id, title)
+    const slug = await ensureUniqueSlug(supabase, me.id, title || 'untitled')
     const isPublish = intent === 'publish'
 
-    // AI-generate tags only when publishing; drafts get an empty array
     const tags = isPublish ? await generateTags(title, content) : []
 
     const { data: inserted } = await supabase.from('poems').insert({
@@ -54,19 +51,5 @@ export default async function WritePage() {
       : '/dashboard')
   }
 
-  return (
-    <div className="min-h-screen px-4 sm:px-8 pt-20 pb-16 sm:py-24">
-      <NavBar />
-      <div className="max-w-2xl mx-auto">
-        <div className="flex items-center gap-5 mb-12 border-b border-ink-text/10 pb-6">
-          <Link href="/dashboard" className="font-body italic text-sm text-ink-muted hover:text-ink-text transition-colors">
-            ← back
-          </Link>
-          <h1 className="font-display italic text-2xl text-ink-text tracking-wide">New poem</h1>
-        </div>
-
-        <PoemEditor action={createPoem} />
-      </div>
-    </div>
-  )
+  return <WriteEditor action={createPoem} />
 }

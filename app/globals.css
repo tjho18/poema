@@ -3,34 +3,59 @@
 @tailwind utilities;
 
 @layer base {
-  /* Soft black-on-white text selection */
   ::selection {
-    background-color: rgba(0, 0, 0, 0.10);
-    color: #0a0a0a;
+    background-color: rgba(185, 122, 85, 0.15);
+    color: #1B1A2E;
   }
 
-  /* Mobile: barely-warm off-white — just enough to evoke paper without
-     announcing itself. Desktop (≥640px): pure white for the gradient. */
   body {
-    background-color: #F7F7F5;
-  }
-  @media (min-width: 640px) {
-    body {
-      background-color: #ffffff;
-    }
+    background-color: #FAF6EE;
+    color: #1B1A2E;
   }
 
-  /* Scrollbar matches the white page on desktop */
   html {
-    scrollbar-color: #6b6b6b #ffffff;
+    scrollbar-color: #A89F8C #FAF6EE;
   }
 
   * {
     box-sizing: border-box;
   }
 
-  /* Stagger-fade poem lines — opacity starts at 0, animation fills forward.
-     The animationDelay is set inline per line in PoemDisplay.tsx */
+  /* Evening warmth — toggled by JS after 9pm local time */
+  html.evening body {
+    background-color: #F8F0E0;
+  }
+  html.evening {
+    --color-ink: #2A2940;
+    transition: background-color 600ms ease;
+  }
+
+  /* OpenType features for all serif text */
+  .font-serif,
+  .font-display,
+  .font-body {
+    font-feature-settings: "kern" 1, "liga" 1, "dlig" 1, "onum" 1;
+    font-variant-ligatures: common-ligatures discretionary-ligatures;
+  }
+
+  /* Override for tabular UI: counts, timestamps */
+  .font-serif--ui {
+    font-feature-settings: "kern" 1, "lnum" 1, "tnum" 1;
+  }
+
+  /* Small-caps attributions */
+  .font-serif-sc {
+    font-variant: small-caps;
+    letter-spacing: 0.04em;
+    font-feature-settings: "kern" 1, "smcp" 1, "c2sc" 0;
+  }
+
+  /* Caret colour in write mode */
+  .caret-terracotta {
+    caret-color: #B97A55;
+  }
+
+  /* Poem line fade-in — stagger set inline per line */
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(6px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -39,5 +64,21 @@
   .poem-line {
     opacity: 0;
     animation: fadeIn 0.7s ease forwards;
+  }
+
+  /* Reduced motion: opacity only, no transforms */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+    .poem-line {
+      transform: none !important;
+      animation: fadeInSimple 0.3s ease forwards;
+    }
+    @keyframes fadeInSimple {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
   }
 }

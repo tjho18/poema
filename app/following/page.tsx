@@ -34,10 +34,6 @@ export default async function FollowingPage() {
               <PoemCard
                 key={poem.id}
                 poem={poem}
-                byline={{
-                  username:    poem.author_username,
-                  displayName: poem.author_display_name,
-                }}
               />
             ))}
           </div>

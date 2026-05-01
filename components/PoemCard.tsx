@@ -1,51 +1,100 @@
 import Link from 'next/link'
-import type { Poem } from '@/types/poem'
-
-interface Byline {
-  username: string
-  displayName: string | null
-}
+import type { PublicPoem } from '@/types/poem'
 
 interface Props {
-  poem: Poem
-  byline?: Byline
-  // Override the default link URL. Defaults to /{username}/p/{slug}
-  // when byline is provided, else falls back to /poems/{id}.
+  poem: PublicPoem
+  variant?: 'dark' | 'light'
   href?: string
 }
 
-// No borders — cards are defined purely by spacing and typography weight.
-// Hover: the faintest background tint, like a thumb resting on a page.
-export default function PoemCard({ poem, byline, href }: Props) {
-  const previewLines = poem.content.split('\n').slice(0, 3).join('\n')
+// Dark variant: first/featured card — ink background, cream text.
+// Light variant: standard card — parchment background, ink text.
+// Tap: scale 0.985 on press (handled via active: pseudo-class via CSS).
+export default function PoemCard({ poem, variant = 'light', href }: Props) {
+  const previewLines = poem.content.split('\n').slice(0, 4).join('\n')
   const target =
     href ??
-    (byline && poem.slug
-      ? `/${byline.username}/p/${poem.slug}`
+    (poem.author_username && poem.slug
+      ? `/${poem.author_username}/p/${poem.slug}`
       : `/poems/${poem.id}`)
+
+  const authorName = (poem.author_display_name || poem.author_username).toLowerCase()
+
+  if (variant === 'dark') {
+    return (
+      <Link
+        href={target}
+        className="block rounded-[12px] p-5 active:scale-[0.985] transition-transform duration-[120ms]"
+        style={{ backgroundColor: '#1B1A2E' }}
+      >
+        {poem.title && (
+          <h2
+            className="font-serif italic mb-3"
+            style={{ fontSize: '14px', lineHeight: '20px', color: '#EADFC5' }}
+          >
+            {poem.title}
+          </h2>
+        )}
+        <p
+          className="font-serif mb-4"
+          style={{
+            fontSize: '11px',
+            lineHeight: '1.7',
+            color: 'rgba(234,223,197,0.72)',
+            whiteSpace: 'pre-wrap',
+            display: '-webkit-box',
+            WebkitLineClamp: 4,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}
+        >
+          {previewLines}
+        </p>
+        <p
+          className="font-serif-sc font-serif italic"
+          style={{ fontSize: '10px', color: '#B97A55', letterSpacing: '0.04em' }}
+        >
+          — {authorName}
+        </p>
+      </Link>
+    )
+  }
 
   return (
     <Link
       href={target}
-      className="group block px-6 py-7 rounded hover:bg-black/[0.025] transition-colors duration-300"
+      className="block rounded-[12px] p-5 bg-parchment active:scale-[0.985] transition-transform duration-[120ms]"
+      style={{ border: '0.5px solid rgba(27,26,46,0.10)' }}
     >
       {poem.title && (
-        <h2 className="font-display italic font-semibold text-lg text-ink-text mb-1 group-hover:opacity-70 transition-opacity duration-200">
+        <h2
+          className="font-serif italic mb-3"
+          style={{ fontSize: '14px', lineHeight: '20px', color: '#1B1A2E' }}
+        >
           {poem.title}
         </h2>
       )}
-
-      {byline && (
-        <p className={`font-body italic text-xs text-ink-muted/70 mb-4 ${poem.title ? '' : 'mt-0'}`}>
-          — {byline.displayName || byline.username}
-        </p>
-      )}
-      {!byline && <div className="mb-4" />}
-
-      <p className="font-body text-ink-muted text-base leading-relaxed whitespace-pre-line line-clamp-3">
+      <p
+        className="font-serif mb-4"
+        style={{
+          fontSize: '11px',
+          lineHeight: '1.7',
+          color: '#2C2A40',
+          whiteSpace: 'pre-wrap',
+          display: '-webkit-box',
+          WebkitLineClamp: 4,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+        }}
+      >
         {previewLines}
       </p>
-
+      <p
+        className="font-serif-sc font-serif"
+        style={{ fontSize: '10px', color: '#A89F8C', letterSpacing: '0.04em' }}
+      >
+        — {authorName}
+      </p>
     </Link>
   )
 }

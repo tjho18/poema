@@ -81,35 +81,58 @@ export async function GET(
         style={{
           width: '100%',
           height: '100%',
-          backgroundColor: '#F7F7F5',
+          backgroundColor: '#FAF6EE',     // parchment
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '88px 80px 72px',
+          padding: '96px 88px 88px',
           fontFamily: '"EB Garamond", Georgia, serif',
           position: 'relative',
         }}
       >
+        {/* Pen mark — top-left corner, simplified mark */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 56,
+            left: 64,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          {/* dot */}
+          <div style={{
+            width: 10, height: 10, borderRadius: 5,
+            backgroundColor: '#1B1A2E',
+          }} />
+          {/* three lines */}
+          <div style={{ width: 28, height: 2, backgroundColor: '#1B1A2E', opacity: 0.85, borderRadius: 1 }} />
+          <div style={{ width: 36, height: 2, backgroundColor: '#1B1A2E', borderRadius: 1 }} />
+          <div style={{ width: 30, height: 2, backgroundColor: '#1B1A2E', opacity: 0.85, borderRadius: 1 }} />
+        </div>
+
         {/* Title */}
         {poem.title ? (
           <div
             style={{
-              fontSize: 36,
+              fontSize: 40,
               fontStyle: 'italic',
               fontWeight: 600,
-              color: '#0a0a0a',
+              color: '#1B1A2E',
               textAlign: 'center',
-              marginBottom: 40,
+              marginBottom: 44,
               lineHeight: 1.3,
               maxWidth: 800,
+              letterSpacing: 0.4,
             }}
           >
             {poem.title}
           </div>
         ) : (
-          /* Thin rule instead of title */
-          <div style={{ width: 48, height: 1, backgroundColor: '#0a0a0a', opacity: 0.15, marginBottom: 48 }} />
+          <div style={{ width: 48, height: 1, backgroundColor: '#1B1A2E', opacity: 0.15, marginBottom: 48 }} />
         )}
 
         {/* Poem lines */}
@@ -125,15 +148,15 @@ export async function GET(
         >
           {lines.map((line, i) =>
             line.trim() === '' ? (
-              <div key={i} style={{ height: 20 }} />
+              <div key={i} style={{ height: 22 }} />
             ) : (
               <div
                 key={i}
                 style={{
-                  fontSize: 26,
+                  fontSize: 28,
                   fontStyle: 'normal',
                   fontWeight: 400,
-                  color: '#0a0a0a',
+                  color: '#2C2A40',
                   textAlign: 'center',
                   lineHeight: 1.85,
                 }}
@@ -143,40 +166,40 @@ export async function GET(
             ),
           )}
           {truncated && (
-            <div style={{ fontSize: 22, color: '#6b6b6b', marginTop: 8 }}>⋯</div>
+            <div style={{ fontSize: 24, color: '#A89F8C', marginTop: 12, letterSpacing: 8 }}>· · ·</div>
           )}
         </div>
 
-        {/* Rule */}
-        <div style={{ width: 48, height: 1, backgroundColor: '#0a0a0a', opacity: 0.12, marginTop: 44, marginBottom: 22 }} />
+        {/* Hairline rule */}
+        <div style={{ width: 48, height: 1, backgroundColor: '#1B1A2E', opacity: 0.12, marginTop: 48, marginBottom: 24 }} />
 
-        {/* Author */}
+        {/* Author — small caps style via uppercase + tracking */}
         <div
           style={{
-            fontSize: 18,
+            fontSize: 16,
             fontStyle: 'italic',
             fontWeight: 400,
-            color: '#6b6b6b',
-            letterSpacing: 1,
+            color: '#A89F8C',
+            letterSpacing: 2.5,
+            textTransform: 'uppercase',
           }}
         >
           — {poetName}
         </div>
 
-        {/* Poema watermark */}
+        {/* Poema wordmark — bottom, terracotta */}
         <div
           style={{
             position: 'absolute',
-            bottom: 32,
-            fontSize: 14,
+            bottom: 56,
+            fontSize: 18,
             fontStyle: 'italic',
             fontWeight: 400,
-            color: '#6b6b6b',
-            opacity: 0.35,
-            letterSpacing: 3,
+            color: '#B97A55',
+            letterSpacing: 4,
           }}
         >
-          poema.app
+          poema
         </div>
       </div>
     ),

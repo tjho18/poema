@@ -10,7 +10,15 @@ export default async function NavBar() {
   const signedIn = Boolean(user && profile?.username)
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between px-4 sm:px-8 py-4 bg-white/90 backdrop-blur-sm border-b border-ink-text/10">
+    <nav
+      className="hidden sm:flex fixed top-0 left-0 right-0 z-20 items-center justify-between px-4 sm:px-8 py-4 backdrop-blur-sm border-b"
+      style={{
+        background: 'rgba(250,246,238,0.86)',
+        borderBottomColor: 'rgba(27,26,46,0.08)',
+        backdropFilter: 'blur(20px) saturate(1.05)',
+        WebkitBackdropFilter: 'blur(20px) saturate(1.05)',
+      }}
+    >
       <Link
         href="/"
         className="flex items-center gap-2.5 hover:opacity-60 transition-opacity"

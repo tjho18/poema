@@ -1,16 +1,24 @@
 import type { Metadata } from 'next'
 import { EB_Garamond } from 'next/font/google'
+import localFont from 'next/font/local'
 import './globals.css'
+import Grain from '@/components/Grain'
+import BottomNav from '@/components/BottomNav'
+import EveningTheme from '@/components/EveningTheme'
+import PushNotificationSetup from '@/components/PushNotificationSetup'
 
-// EB Garamond: one typeface for everything — titles, body, UI.
-// The full range of weights and italic style gives us all the typographic
-// distinction we need without introducing a second font.
 const garamond = EB_Garamond({
   subsets: ['latin'],
   variable: '--font-garamond',
   display: 'swap',
   weight: ['400', '500', '600', '700', '800'],
   style: ['normal', 'italic'],
+})
+
+const geist = localFont({
+  src: './fonts/GeistVF.woff',
+  variable: '--font-geist',
+  display: 'swap',
 })
 
 export const metadata: Metadata = {
@@ -20,7 +28,6 @@ export const metadata: Metadata = {
     siteName: 'Poema',
     type: 'website',
   },
-  // PWA
   applicationName: 'Poema',
   appleWebApp: {
     capable: true,
@@ -39,16 +46,19 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={garamond.variable}>
+    <html lang="en" className={`${garamond.variable} ${geist.variable}`}>
       <head>
-        {/* Apple PWA icons — one per common size */}
         <link rel="apple-touch-icon" sizes="180x180" href="/api/icon/180" />
         <link rel="apple-touch-icon" sizes="152x152" href="/api/icon/152" />
         <link rel="apple-touch-icon" sizes="167x167" href="/api/icon/167" />
-        <meta name="theme-color" content="#F7F7F5" />
+        <meta name="theme-color" content="#FAF6EE" />
       </head>
-      <body className="bg-ink-bg text-ink-text min-h-screen antialiased">
+      <body className="bg-parchment text-poem-ink min-h-screen antialiased">
+        <Grain />
+        <EveningTheme />
+        <PushNotificationSetup />
         {children}
+        <BottomNav />
       </body>
     </html>
   )

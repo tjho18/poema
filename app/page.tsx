@@ -1,23 +1,19 @@
 import { getHeroPool } from '@/lib/queries'
-import HomeHeroClient from './HomeHeroClient'
+import PoemReader from '@/components/PoemReader'
 import NavBar from '@/components/NavBar'
-import GradientBackground from '@/components/GradientBackground'
-import PlatformFeed from '@/components/PlatformFeed'
-import FadeInSection from '@/components/FadeInSection'
 
 export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
-  const heroPool = await getHeroPool(40)
+  const poems = await getHeroPool(40)
 
   return (
-    <main className="min-h-screen flex flex-col items-center relative px-6">
-      <GradientBackground />
+    <>
+      {/* Desktop only — mobile uses BottomNav from layout */}
       <NavBar />
-      <HomeHeroClient poems={heroPool} />
-      <FadeInSection className="w-full">
-        <PlatformFeed poems={heroPool} />
-      </FadeInSection>
-    </main>
+      <main style={{ height: '100dvh', overflow: 'hidden', background: '#FAF6EE' }}>
+        <PoemReader poems={poems} />
+      </main>
+    </>
   )
 }
