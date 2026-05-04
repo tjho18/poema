@@ -1,55 +1,21 @@
 import { redirect } from 'next/navigation'
-import { revalidatePath } from 'next/cache'
-import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { requireUser } from '@/lib/auth'
-import { ensureUniqueSlug } from '@/lib/slug'
-import { generateTags } from '@/lib/tags'
+import { createPoemAction } from '@/app/actions/poems'
 import WriteEditor from '@/components/WriteEditor'
 
 export const metadata = { title: 'Write — Poema' }
 export const dynamic  = 'force-dynamic'
 
 export default async function WritePage() {
-  const { user, profile } = await requireUser()
+  await requireUser() // ensures auth, redirects to /signin if not signed in
 
-  async function createPoem(formData: FormData) {
+  // Wrap the shared action to call redirect() — needed for the full page route.
+  // The sheet uses createPoemAction directly and handles navigation client-side.
+  async function createAndRedirect(formData: FormData) {
     'use server'
-    const supabase = await createServerSupabaseClient()
-    const { data: { user: me } } = await supabase.auth.getUser()
-    if (!me) redirect('/signin')
-
-    const title   = (formData.get('title') as string ?? '').trim()
-    const content = (formData.get('content') as string ?? '')
-    const intent  = formData.get('intent') as string
-
-    const slug = await ensureUniqueSlug(supabase, me.id, title || 'untitled')
-    const isPublish = intent === 'publish'
-
-    const tags = isPublish ? await generateTags(title, content) : []
-
-    const { data: inserted } = await supabase.from('poems').insert({
-      title,
-      content,
-      tags,
-      slug,
-      author_id: me.id,
-      status: isPublish ? 'published' : 'draft',
-      published_at: isPublish ? new Date().toISOString() : null,
-    }).select('id').single()
-
-    revalidatePath('/')
-    revalidatePath('/explore')
-    revalidatePath('/dashboard')
-    if (profile.username) {
-      revalidatePath(`/${profile.username}`)
-      revalidatePath(`/${profile.username}/poems`)
-      if (isPublish) revalidatePath(`/${profile.username}/p/${slug}`)
-    }
-
-    redirect(isPublish && profile.username
-      ? `/${profile.username}/p/${slug}`
-      : '/dashboard')
+    const { url } = await createPoemAction(formData)
+    redirect(url)
   }
 
-  return <WriteEditor action={createPoem} />
+  return <WriteEditor action={createAndRedirect} />
 }

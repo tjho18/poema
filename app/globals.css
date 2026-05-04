@@ -2,23 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── CSS View Transitions — smooth page navigation on Safari 18+ / Chrome ── */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root) {
+  animation: 220ms ease both fade-out;
+}
+::view-transition-new(root) {
+  animation: 280ms ease both fade-in-page;
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+@keyframes fade-in-page {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 @layer base {
   ::selection {
     background-color: rgba(185, 122, 85, 0.15);
     color: #1B1A2E;
   }
 
-  body {
-    background-color: #FAF6EE;
-    color: #1B1A2E;
+  html {
+    /* Allow text scaling to respect iOS Dynamic Type (accessibility) */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust:         100%;
+    scrollbar-color:          #A89F8C #FAF6EE;
+    /* Fill notch / home indicator areas with parchment */
+    background-color:         #FAF6EE;
   }
 
-  html {
-    scrollbar-color: #A89F8C #FAF6EE;
+  body {
+    background-color: #FAF6EE;
+    color:            #1B1A2E;
+    /* Prevent rubber-band overscroll from flashing white on parchment pages */
+    overscroll-behavior: none;
   }
 
   * {
     box-sizing: border-box;
+    /* Remove 300ms click delay on iOS */
+    touch-action: manipulation;
   }
 
   /* Evening warmth — toggled by JS after 9pm local time */
@@ -27,6 +57,7 @@
   }
   html.evening {
     --color-ink: #2A2940;
+    background-color: #F8F0E0;
     transition: background-color 600ms ease;
   }
 
@@ -38,15 +69,15 @@
     font-variant-ligatures: common-ligatures discretionary-ligatures;
   }
 
-  /* Override for tabular UI: counts, timestamps */
+  /* Tabular UI: counts, timestamps */
   .font-serif--ui {
     font-feature-settings: "kern" 1, "lnum" 1, "tnum" 1;
   }
 
   /* Small-caps attributions */
   .font-serif-sc {
-    font-variant: small-caps;
-    letter-spacing: 0.04em;
+    font-variant:          small-caps;
+    letter-spacing:        0.04em;
     font-feature-settings: "kern" 1, "smcp" 1, "c2sc" 0;
   }
 
@@ -66,10 +97,18 @@
     animation: fadeIn 0.7s ease forwards;
   }
 
+  /* Smooth webkit scrolling inside sheets */
+  .overflow-y-auto,
+  textarea {
+    -webkit-overflow-scrolling: touch;
+  }
+
   /* Reduced motion: opacity only, no transforms */
   @media (prefers-reduced-motion: reduce) {
-    * {
-      animation-duration: 0.01ms !important;
+    *,
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation-duration:  0.01ms !important;
       transition-duration: 0.01ms !important;
     }
     .poem-line {

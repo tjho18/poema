@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { PublicPoem } from '@/types/poem'
 import { savePoem } from '@/app/actions/saves'
-import { hapticTap, hapticSuccess } from '@/lib/haptics'
+import { hapticTap, hapticSuccess, hapticSelection } from '@/lib/haptics'
 
 interface Props {
   poems: PublicPoem[]
@@ -28,13 +28,13 @@ function ProgressTicks({ active }: { active: number }) {
         <span
           key={i}
           style={{
-            display: 'block',
-            width: '1px',
-            height: '6px',
-            borderRadius: '1px',
+            display:         'block',
+            width:           '1px',
+            height:          '6px',
+            borderRadius:    '1px',
             backgroundColor: '#A89F8C',
-            opacity: i === active ? 1 : 0.25,
-            transition: 'opacity 300ms ease',
+            opacity:         i === active ? 1 : 0.25,
+            transition:      'opacity 300ms ease',
           }}
         />
       ))}
@@ -42,24 +42,62 @@ function ProgressTicks({ active }: { active: number }) {
   )
 }
 
-export default function PoemReader({ poems }: Props) {
-  const [queue, setQueue]             = useState<PublicPoem[]>([])
-  const [currentIdx, setCurrentIdx]   = useState(0)
-  const [tickIdx, setTickIdx]         = useState(0)
-  const [poemKey, setPoemKey]         = useState(0) // forces AnimatePresence remount
-  const [hasNavigated, setHasNavigated] = useState(false)
-  const transitioning                  = useRef(false)
-  const touchStartY                    = useRef(0)
-  const touchStartX                    = useRef(0)
+// Pull-to-refresh indicator: circular progress arc
+function PullIndicator({ progress }: { progress: number }) {
+  const r    = 7
+  const circ = 2 * Math.PI * r
+  return (
+    <motion.div
+      style={{
+        position:      'absolute',
+        top:           'max(16px, env(safe-area-inset-top))',
+        left:          '50%',
+        transform:     'translateX(-50%)',
+        zIndex:        10,
+        opacity:       Math.min(progress / 60, 1),
+        pointerEvents: 'none',
+      }}
+      aria-hidden="true"
+    >
+      <svg width="20" height="20" viewBox="0 0 20 20">
+        <circle
+          cx="10" cy="10" r={r}
+          fill="none" stroke="#A89F8C" strokeWidth="1.5" opacity="0.3"
+        />
+        <circle
+          cx="10" cy="10" r={r}
+          fill="none" stroke="#A89F8C" strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeDasharray={`${circ * Math.min(progress / 80, 1)} ${circ}`}
+          transform="rotate(-90 10 10)"
+        />
+      </svg>
+    </motion.div>
+  )
+}
 
-  // Build initial queue of 8
+export default function PoemReader({ poems }: Props) {
+  const [queue,        setQueue       ] = useState<PublicPoem[]>([])
+  const [currentIdx,   setCurrentIdx  ] = useState(0)
+  const [tickIdx,      setTickIdx     ] = useState(0)
+  const [poemKey,      setPoemKey     ] = useState(0)
+  const [hasNavigated, setHasNavigated] = useState(false)
+  const [pullY,        setPullY       ] = useState(0)
+  const [refreshing,   setRefreshing  ] = useState(false)
+
+  const transitioning = useRef(false)
+  const touchStartY   = useRef(0)
+  const touchStartX   = useRef(0)
+  const isPulling     = useRef(false)
+
+  // ── Build initial queue ────────────────────────────────────────────────────
   useEffect(() => {
     if (poems.length === 0) return
     setQueue(shuffle(poems).slice(0, Math.min(8, poems.length)))
     setCurrentIdx(0)
   }, [poems])
 
-  // Refill when < 3 remain ahead
+  // ── Refill when < 3 ahead ─────────────────────────────────────────────────
   useEffect(() => {
     if (queue.length === 0) return
     const ahead = queue.length - 1 - currentIdx
@@ -70,12 +108,14 @@ export default function PoemReader({ poems }: Props) {
     }
   }, [currentIdx, queue, poems])
 
-  const navigate = useCallback((dir: 'next' | 'prev') => {
+  // ── Navigation with selection haptic ──────────────────────────────────────
+  const navigate = useCallback(async (dir: 'next' | 'prev') => {
     if (transitioning.current) return
     const next = dir === 'next' ? currentIdx + 1 : currentIdx - 1
     if (next < 0 || next >= queue.length) return
 
     transitioning.current = true
+    hapticSelection() // fire-and-forget — never blocks UI
     setCurrentIdx(next)
     setPoemKey(k => k + 1)
     setTickIdx(t => dir === 'next' ? (t + 1) % 5 : (t + 4) % 5)
@@ -83,7 +123,18 @@ export default function PoemReader({ poems }: Props) {
     setTimeout(() => { transitioning.current = false }, 600)
   }, [currentIdx, queue.length])
 
-  // Keyboard navigation
+  // ── Pull-to-refresh ───────────────────────────────────────────────────────
+  async function triggerRefresh() {
+    setRefreshing(true)
+    await hapticTap()
+    setQueue(shuffle(poems).slice(0, Math.min(8, poems.length)))
+    setCurrentIdx(0)
+    setPoemKey(k => k + 1)
+    await new Promise(r => setTimeout(r, 350))
+    setRefreshing(false)
+  }
+
+  // ── Keyboard navigation ───────────────────────────────────────────────────
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
@@ -95,12 +146,12 @@ export default function PoemReader({ poems }: Props) {
     return () => window.removeEventListener('keydown', onKey)
   }, [navigate])
 
-  // Long-press to save (500ms)
+  // ── Long-press to save (500 ms) ───────────────────────────────────────────
   const [savedFlash, setSavedFlash] = useState(false)
-  const [showHint, setShowHint] = useState(false)
+  const [showHint,   setShowHint  ] = useState(false)
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const longPressFired = useRef(false)
 
-  // Show hint only if the user has never navigated before — once they have,
-  // we set a localStorage flag and never show it again.
   useEffect(() => {
     try {
       const seen = localStorage.getItem('poema:swipe-hint-seen')
@@ -111,13 +162,10 @@ export default function PoemReader({ poems }: Props) {
   useEffect(() => {
     if (hasNavigated) {
       try { localStorage.setItem('poema:swipe-hint-seen', '1') } catch {}
-      // Fade out after the first navigation
       const t = setTimeout(() => setShowHint(false), 400)
       return () => clearTimeout(t)
     }
   }, [hasNavigated])
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const longPressFired = useRef(false)
 
   async function triggerSave() {
     longPressFired.current = true
@@ -131,39 +179,61 @@ export default function PoemReader({ poems }: Props) {
     }
   }
 
+  // ── Touch handlers ────────────────────────────────────────────────────────
   function onTouchStart(e: React.TouchEvent) {
-    touchStartY.current = e.touches[0].clientY
-    touchStartX.current = e.touches[0].clientX
+    touchStartY.current    = e.touches[0].clientY
+    touchStartX.current    = e.touches[0].clientX
     longPressFired.current = false
+    isPulling.current      = false
     longPressTimer.current = setTimeout(triggerSave, 500)
+  }
+
+  function onTouchMove(e: React.TouchEvent) {
+    const dy = e.touches[0].clientY - touchStartY.current
+    const dx = Math.abs(e.touches[0].clientX - touchStartX.current)
+
+    if (Math.abs(dy) > 10 || dx > 10) {
+      if (longPressTimer.current) clearTimeout(longPressTimer.current)
+    }
+
+    // Pull-to-refresh when at first poem + pulling down
+    if (currentIdx === 0 && dy > 0 && !refreshing) {
+      isPulling.current = true
+      setPullY(dy)
+    }
   }
 
   function onTouchEnd(e: React.TouchEvent) {
     if (longPressTimer.current) clearTimeout(longPressTimer.current)
-    if (longPressFired.current) return // long-press already handled
+
     const dy = e.changedTouches[0].clientY - touchStartY.current
     const dx = Math.abs(e.changedTouches[0].clientX - touchStartX.current)
+
+    // Pull-to-refresh threshold: 80 px
+    if (isPulling.current && pullY > 80 && currentIdx === 0) {
+      isPulling.current = false
+      setPullY(0)
+      triggerRefresh()
+      return
+    }
+
+    setPullY(0)
+    isPulling.current = false
+
+    if (longPressFired.current) return
+
     if (Math.abs(dy) > dx && Math.abs(dy) > 50) {
       navigate(dy < 0 ? 'next' : 'prev')
     }
   }
 
-  function onTouchMove(e: React.TouchEvent) {
-    // Movement cancels long-press intent
-    const dy = Math.abs(e.touches[0].clientY - touchStartY.current)
-    const dx = Math.abs(e.touches[0].clientX - touchStartX.current)
-    if (dy > 10 || dx > 10) {
-      if (longPressTimer.current) clearTimeout(longPressTimer.current)
-    }
-  }
-
-  // Tap zones: bottom-third = next, top-third = prev, center = nothing
+  // ── Tap zones: top-third = prev, bottom-third = next ─────────────────────
   function onTap(e: React.MouseEvent<HTMLDivElement>) {
     if (longPressFired.current) return
     const { clientY } = e
     const h = window.innerHeight
-    if (clientY > h * 0.66)  navigate('next')
-    if (clientY < h * 0.33)  navigate('prev')
+    if (clientY > h * 0.66) navigate('next')
+    if (clientY < h * 0.33) navigate('prev')
   }
 
   const poem = queue[currentIdx]
@@ -180,9 +250,12 @@ export default function PoemReader({ poems }: Props) {
     ? (poem.author_display_name || poem.author_username).toLowerCase()
     : ''
 
-  // Extract mood from tags for attribution
   const moodWords = ['longing', 'wonder', 'solitude', 'joy']
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const mood = poem?.tags?.find(t => moodWords.includes(t.toLowerCase())) ?? ''
+
+  // Subtle downward nudge while pulling
+  const pullTranslate = Math.min(pullY * 0.28, 22)
 
   return (
     <div
@@ -204,10 +277,13 @@ export default function PoemReader({ poems }: Props) {
         }}
       />
 
+      {/* Pull-to-refresh arc */}
+      <PullIndicator progress={pullY} />
+
       {/* Progress ticks */}
       <ProgressTicks active={tickIdx} />
 
-      {/* Saved bookmark — settles into the right margin briefly */}
+      {/* Saved bookmark flash */}
       <AnimatePresence>
         {savedFlash && (
           <motion.div
@@ -226,10 +302,15 @@ export default function PoemReader({ poems }: Props) {
         )}
       </AnimatePresence>
 
-      {/* Poem — fixed top anchor, long poems clip naturally at bottom */}
+      {/* Poem — safe-area-aware padding */}
       <div
         className="flex-1 flex flex-col items-center overflow-hidden"
-        style={{ paddingTop: '22vh', paddingBottom: '80px' }}
+        style={{
+          paddingTop:    'max(22vh, calc(env(safe-area-inset-top) + 80px))',
+          paddingBottom: 'calc(env(safe-area-inset-bottom) + 80px)',
+          transform:     `translateY(${pullTranslate}px)`,
+          transition:    pullY === 0 ? 'transform 300ms ease' : 'none',
+        }}
       >
         <AnimatePresence mode="wait">
           {poem && (
@@ -238,10 +319,7 @@ export default function PoemReader({ poems }: Props) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{
-                duration: 0.4,
-                ease: SETTLE,
-              }}
+              transition={{ duration: 0.4, ease: SETTLE }}
               className="flex flex-col items-center px-6"
             >
               {/* Title */}
@@ -254,19 +332,18 @@ export default function PoemReader({ poems }: Props) {
                 </h1>
               )}
 
-              {/* Body — stanza-aware truncation: show whole stanzas only,
-                  never break mid-line. If clipped, append a · ornament. */}
+              {/* Body — stanza-aware truncation */}
               <div
                 className="font-serif text-center max-w-poem mx-auto"
                 style={{
-                  fontSize: '15px',
+                  fontSize:   '15px',
                   lineHeight: '27.75px',
-                  color: '#2C2A40',
+                  color:      '#2C2A40',
                   whiteSpace: 'pre-wrap',
                 }}
               >
                 {(() => {
-                  const stanzas = poem.content.split(/\n\s*\n/)
+                  const stanzas   = poem.content.split(/\n\s*\n/)
                   const MAX_LINES = 9
                   const shown: string[] = []
                   let lineCount = 0
@@ -276,8 +353,7 @@ export default function PoemReader({ poems }: Props) {
                     shown.push(stanza)
                     lineCount += lines
                   }
-                  // If nothing fit (single huge stanza), fall back to first 6 lines + line break
-                  const body = shown.length > 0
+                  const body    = shown.length > 0
                     ? shown.join('\n\n')
                     : poem.content.split('\n').slice(0, 6).join('\n')
                   const clipped = body.length < poem.content.trim().length
@@ -285,7 +361,13 @@ export default function PoemReader({ poems }: Props) {
                     <>
                       {body}
                       {clipped && (
-                        <span style={{ display: 'block', marginTop: '12px', color: '#A89F8C', fontSize: '14px', letterSpacing: '0.3em' }}>
+                        <span style={{
+                          display:       'block',
+                          marginTop:     '12px',
+                          color:         '#A89F8C',
+                          fontSize:      '14px',
+                          letterSpacing: '0.3em',
+                        }}>
                           · · ·
                         </span>
                       )}
@@ -302,20 +384,16 @@ export default function PoemReader({ poems }: Props) {
                 >
                   — {authorName}
                 </p>
-
-                {/* Ornament */}
                 <span className="text-whisper" style={{ fontSize: '16px', lineHeight: 1 }}>·</span>
-
-                {/* Write CTA */}
                 <Link
                   href="/write"
                   onClick={e => e.stopPropagation()}
                   className="font-serif italic text-terracotta"
                   style={{
-                    fontSize: '13px',
-                    borderBottom: '0.5px solid currentColor',
+                    fontSize:      '13px',
+                    borderBottom:  '0.5px solid currentColor',
                     paddingBottom: '2px',
-                    transition: 'border-bottom-width 150ms ease',
+                    transition:    'border-bottom-width 150ms ease',
                   }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderBottomWidth = '1px' }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderBottomWidth = '0.5px' }}
