@@ -6,16 +6,20 @@ import { useSmartPunctuation } from '@/hooks/useSmartPunctuation'
 import type { Poem } from '@/types/poem'
 
 interface Props {
-  initialData?:  Poem
-  /** Server action. Returns { url } for sheet mode; caller may also redirect(). */
-  action:        (formData: FormData) => Promise<{ url: string } | void>
-  editing?:      boolean
-  /** Sheet mode: called with the redirect URL after a successful publish */
-  onPublished?:  (url: string) => void
+  initialData?:        Poem
+  /** Server action. Returns { url, poemId } for sheet mode; caller may also redirect(). */
+  action:              (formData: FormData) => Promise<{ url: string; poemId: string } | void>
+  editing?:            boolean
+  /** Sheet mode: called with url + poemId after a successful publish */
+  onPublished?:        (url: string, poemId: string) => void
   /** Sheet mode: called when user taps the dismiss/back button */
-  onDismiss?:    () => void
+  onDismiss?:          () => void
   /** True when rendered inside the WriteSheet overlay */
-  sheetMode?:    boolean
+  sheetMode?:          boolean
+  /** Pre-linked poem this is responding to */
+  respondingToPoemId?: string | null
+  /** Today's prompt id to tag the poem */
+  promptId?:           string | null
 }
 
 function wordCount(text: string): number {
@@ -44,10 +48,12 @@ async function nativeConfirm(message: string): Promise<boolean> {
 export default function WriteEditor({
   initialData,
   action,
-  editing   = false,
+  editing            = false,
   onPublished,
   onDismiss,
-  sheetMode = false,
+  sheetMode          = false,
+  respondingToPoemId = null,
+  promptId           = null,
 }: Props) {
   const router = useRouter()
   const { transform } = useSmartPunctuation()
@@ -86,7 +92,9 @@ export default function WriteEditor({
     fd.set('title',   t)
     fd.set('content', b)
     fd.set('intent',  'draft')
-    if (initialData?.id) fd.set('poem_id', initialData.id)
+    if (initialData?.id)    fd.set('poem_id',               initialData.id)
+    if (respondingToPoemId) fd.set('responding_to_poem_id', respondingToPoemId)
+    if (promptId)           fd.set('prompt_id',             promptId)
     try {
       await action(fd)
       lastSaved.current = b
@@ -120,13 +128,15 @@ export default function WriteEditor({
     fd.set('title',   title)
     fd.set('content', body)
     fd.set('intent',  intent)
-    if (initialData?.id) fd.set('poem_id', initialData.id)
+    if (initialData?.id)    fd.set('poem_id',               initialData.id)
+    if (respondingToPoemId) fd.set('responding_to_poem_id', respondingToPoemId)
+    if (promptId)           fd.set('prompt_id',             promptId)
     setPendingIntent(intent)
     try {
       const result = await action(fd)
-      // Sheet mode: action returns { url } rather than redirecting
+      // Sheet mode: action returns { url, poemId } rather than redirecting
       if (intent === 'publish' && onPublished && result && 'url' in result) {
-        onPublished(result.url as string)
+        onPublished(result.url as string, (result as { url: string; poemId: string }).poemId)
       }
     } finally {
       setPendingIntent(null)

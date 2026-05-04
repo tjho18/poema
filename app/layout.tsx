@@ -9,6 +9,7 @@ import PushNotificationSetup from '@/components/PushNotificationSetup'
 import StatusBarManager from '@/components/StatusBarManager'
 import WriteSheet from '@/components/WriteSheet'
 import { WriteSheetProvider } from '@/contexts/WriteSheetContext'
+import { getTodayPrompt } from '@/lib/queries'
 
 const garamond = EB_Garamond({
   subsets: ['latin'],
@@ -43,11 +44,14 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  // Fetch today's prompt server-side so it's available in the Write sheet
+  const todayPrompt = await getTodayPrompt().catch(() => null)
+
   return (
     <html lang="en" className={`${garamond.variable} ${geist.variable}`}>
       <head>
@@ -55,22 +59,22 @@ export default function RootLayout({
         <link rel="apple-touch-icon" sizes="152x152" href="/api/icon/152" />
         <link rel="apple-touch-icon" sizes="167x167" href="/api/icon/167" />
         <meta name="theme-color" content="#FAF6EE" />
-        {/* Viewport: respect safe areas, allow text scaling for Dynamic Type */}
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1, viewport-fit=cover"
         />
       </head>
       <body className="bg-parchment text-poem-ink min-h-screen antialiased">
-        <WriteSheetProvider>
+        <WriteSheetProvider
+          promptId={todayPrompt?.id ?? null}
+          promptText={todayPrompt?.text ?? null}
+        >
           <Grain />
           <EveningTheme />
           <PushNotificationSetup />
-          {/* Status bar adapts to route / sheet state */}
           <StatusBarManager />
           {children}
           <BottomNav />
-          {/* iOS-style Write sheet — rendered at body level so it overlays everything */}
           <WriteSheet />
         </WriteSheetProvider>
       </body>

@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getPoetByUsername, getPoemsByPoet } from '@/lib/queries'
+import type { SocialLinks } from '@/types/profile'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import NavBar from '@/components/NavBar'
 import GradientBackground from '@/components/GradientBackground'
@@ -49,6 +50,9 @@ export default async function PoetLandingPage({ params }: Props) {
     initialFollowing = (followingCount ?? 0) > 0
   }
 
+  const socialLinks: SocialLinks = poet.social_links ?? {}
+  const tipUrl: string | null   = poet.tip_url ?? null
+
   return (
     <main className="min-h-screen flex flex-col items-center relative px-6">
       <GradientBackground />
@@ -61,6 +65,8 @@ export default async function PoetLandingPage({ params }: Props) {
         poetId={poet.id}
         viewerIsOwner={viewerIsOwner}
         initialFollowing={initialFollowing}
+        socialLinks={socialLinks}
+        tipUrl={tipUrl}
       />
     </main>
   )
