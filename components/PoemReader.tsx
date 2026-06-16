@@ -6,9 +6,21 @@ import { AnimatePresence, motion } from 'framer-motion'
 import type { PublicPoem } from '@/types/poem'
 import { savePoem } from '@/app/actions/saves'
 import { hapticTap, hapticSuccess, hapticSelection } from '@/lib/haptics'
+import LikeButton from '@/components/LikeButton'
+import ShareButton from '@/components/ShareButton'
 
 interface Props {
   poems: PublicPoem[]
+  viewerId: string | null
+}
+
+// Minimal speech-bubble — links to the poem page where notes live.
+function NoteIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+    </svg>
+  )
 }
 
 const SETTLE = [0.32, 0.72, 0, 1] as const
@@ -76,7 +88,7 @@ function PullIndicator({ progress }: { progress: number }) {
   )
 }
 
-export default function PoemReader({ poems }: Props) {
+export default function PoemReader({ poems, viewerId }: Props) {
   const [queue,        setQueue       ] = useState<PublicPoem[]>([])
   const [currentIdx,   setCurrentIdx  ] = useState(0)
   const [tickIdx,      setTickIdx     ] = useState(0)
@@ -358,14 +370,44 @@ export default function PoemReader({ poems }: Props) {
               </div>
 
               {/* Attribution */}
-              <div className="mt-8 flex flex-col items-center gap-6">
+              <div className="mt-8 flex flex-col items-center gap-5">
                 <p
                   className="font-serif italic text-center"
                   style={{ fontSize: '10px', color: '#AAA' }}
                 >
                   — {authorName}
                 </p>
-                <span className="text-whisper" style={{ fontSize: '16px', lineHeight: 1 }}>·</span>
+
+                {/* Reactions — like · comment · share (taps don't navigate) */}
+                <div
+                  className="flex items-center gap-7"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <LikeButton key={poem.id} poemId={poem.id} viewerId={viewerId} lookupLiked />
+
+                  {poem.slug && (
+                    <Link
+                      href={`/${poem.author_username}/p/${poem.slug}`}
+                      aria-label="Read notes"
+                      className="inline-flex text-ink-muted/40 hover:text-ink-muted transition-colors"
+                    >
+                      <NoteIcon />
+                    </Link>
+                  )}
+
+                  {poem.slug && (
+                    <ShareButton
+                      title={poem.title || poem.content.split('\n').find(l => l.trim()) || 'a poem'}
+                      poet={poem.author_display_name || poem.author_username}
+                      url={`${typeof window !== 'undefined' ? window.location.origin : ''}/${poem.author_username}/p/${poem.slug}`}
+                      username={poem.author_username}
+                      slug={poem.slug}
+                      iconOnly
+                      className="inline-flex text-ink-muted/40 hover:text-ink-muted transition-colors"
+                    />
+                  )}
+                </div>
+
                 <Link
                   href="/write"
                   onClick={e => e.stopPropagation()}

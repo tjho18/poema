@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 
@@ -12,6 +12,9 @@ interface Props {
   count?: number
   // Resolved server-side: null = signed out, string = user id, undefined = unknown.
   viewerId?: string | null
+  // When true, fetch the viewer's liked-state on mount (used where we can't
+  // know it server-side, e.g. the homepage hero cycling through poems).
+  lookupLiked?: boolean
 }
 
 // A hairline heart. Outline when unliked; fills with ink when liked.
@@ -30,9 +33,23 @@ function Heart({ filled }: { filled: boolean }) {
   )
 }
 
-export default function LikeButton({ poemId, initialLiked = false, count, viewerId }: Props) {
+export default function LikeButton({ poemId, initialLiked = false, count, viewerId, lookupLiked }: Props) {
   const [liked, setLiked]     = useState(initialLiked)
   const [loading, setLoading] = useState(false)
+
+  // Self-fetch liked state when the caller can't supply it (hero feed).
+  useEffect(() => {
+    if (!lookupLiked || !viewerId) return
+    let active = true
+    setLiked(false) // reset while we re-check for the new poem
+    createClient()
+      .from('likes')
+      .select('poem_id', { count: 'exact', head: true })
+      .eq('poem_id', poemId)
+      .eq('user_id', viewerId)
+      .then(({ count: c }) => { if (active) setLiked((c ?? 0) > 0) })
+    return () => { active = false }
+  }, [lookupLiked, viewerId, poemId])
 
   // ── Poet view: static count, no toggle (only the poet ever sees this) ──
   if (typeof count === 'number') {
