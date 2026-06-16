@@ -4,6 +4,7 @@ import Link from 'next/link'
 import PoemDisplay from '@/components/PoemDisplay'
 import ShareButton from '@/components/ShareButton'
 import FollowButton from '@/components/FollowButton'
+import BioEditor from '@/components/BioEditor'
 import type { Poem } from '@/types/poem'
 import type { SocialLinks } from '@/types/profile'
 
@@ -94,8 +95,20 @@ export default function PoetHomeClient({
   if (poems.length === 0) {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center px-6">
-        <h1 className="font-display italic text-3xl text-ink-text mb-3 tracking-wide">{displayName}</h1>
-        <p className="font-body italic text-ink-muted text-lg">No poems yet.</p>
+        <h1 className="font-display italic text-3xl text-ink-text mb-2 tracking-wide">{displayName}</h1>
+        <p className="font-body italic text-ink-muted/70 text-xs tracking-wider mb-1">@{username}</p>
+        <BioEditor bio={bio} canEdit={viewerIsOwner} />
+        <p className="mt-8 font-body italic text-ink-muted text-base">
+          {viewerIsOwner ? 'No poems yet — start writing.' : 'No poems yet.'}
+        </p>
+        {viewerIsOwner && (
+          <Link
+            href="/settings"
+            className="mt-4 font-body italic text-xs text-ink-muted/50 hover:text-ink-muted tracking-widest transition-colors"
+          >
+            edit profile →
+          </Link>
+        )}
       </div>
     )
   }
@@ -130,12 +143,8 @@ export default function PoetHomeClient({
               )}
             </div>
 
-            {/* Bio */}
-            {bio && (
-              <p className="mt-3 font-body italic text-xs text-ink-muted/60 text-center max-w-xs leading-relaxed">
-                {bio}
-              </p>
-            )}
+            {/* Bio — inline-editable for the poet, read-only for visitors */}
+            <BioEditor bio={bio} canEdit={viewerIsOwner} />
 
             {/* Social links */}
             {hasSocialLinks && (
@@ -230,6 +239,15 @@ export default function PoetHomeClient({
         >
           all poems →
         </Link>
+
+        {viewerIsOwner && (
+          <Link
+            href="/settings"
+            className="font-body italic text-xs text-ink-muted/40 hover:text-ink-muted transition-colors tracking-widest"
+          >
+            edit profile →
+          </Link>
+        )}
       </div>
     </section>
   )
