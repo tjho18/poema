@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server'
-import type { Poem, PublicPoem, Prompt, PoemRef } from '@/types/poem'
+import type { Poem, PublicPoem, Prompt, PoemRef, PoemComment } from '@/types/poem'
 import type { Profile } from '@/types/profile'
 
 // Platform-wide feed: latest published poems across all poets.
@@ -130,6 +130,55 @@ export async function getResponses(poemId: string): Promise<PublicPoem[]> {
     .eq('responding_to_poem_id', poemId)
     .order('published_at', { ascending: false, nullsFirst: false })
   return (data as PublicPoem[]) ?? []
+}
+
+// Margin notes (comments) on a poem, oldest first, with author names embedded.
+export async function getComments(poemId: string): Promise<PoemComment[]> {
+  const supabase = await createServerSupabaseClient()
+  const { data } = await supabase
+    .from('comments')
+    .select('id, body, created_at, author_id, author:profiles(username, display_name)')
+    .eq('poem_id', poemId)
+    .order('created_at', { ascending: true })
+
+  type Row = {
+    id: string
+    body: string
+    created_at: string
+    author_id: string
+    author: { username: string; display_name: string | null } | null
+  }
+
+  return ((data as Row[] | null) ?? []).map(r => ({
+    id:                  r.id,
+    body:                r.body,
+    created_at:          r.created_at,
+    author_id:           r.author_id,
+    author_username:     r.author?.username ?? '',
+    author_display_name: r.author?.display_name ?? null,
+  }))
+}
+
+// Number of likes on a poem. RLS means a non-zero result only comes back
+// for the poem's author (counts are private to the poet).
+export async function getLikeCount(poemId: string): Promise<number> {
+  const supabase = await createServerSupabaseClient()
+  const { count } = await supabase
+    .from('likes')
+    .select('poem_id', { count: 'exact', head: true })
+    .eq('poem_id', poemId)
+  return count ?? 0
+}
+
+// Whether a specific viewer has liked a poem.
+export async function getViewerLiked(poemId: string, userId: string): Promise<boolean> {
+  const supabase = await createServerSupabaseClient()
+  const { count } = await supabase
+    .from('likes')
+    .select('poem_id', { count: 'exact', head: true })
+    .eq('poem_id', poemId)
+    .eq('user_id', userId)
+  return (count ?? 0) > 0
 }
 
 // Feed of published poems from poets the user follows.

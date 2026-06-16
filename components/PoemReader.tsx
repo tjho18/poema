@@ -85,10 +85,11 @@ export default function PoemReader({ poems }: Props) {
   const [pullY,        setPullY       ] = useState(0)
   const [refreshing,   setRefreshing  ] = useState(false)
 
-  const transitioning = useRef(false)
-  const touchStartY   = useRef(0)
-  const touchStartX   = useRef(0)
-  const isPulling     = useRef(false)
+  const transitioning    = useRef(false)
+  const touchStartY      = useRef(0)
+  const touchStartX      = useRef(0)
+  const isPulling        = useRef(false)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   // ── Build initial queue ────────────────────────────────────────────────────
   useEffect(() => {
@@ -120,6 +121,8 @@ export default function PoemReader({ poems }: Props) {
     setPoemKey(k => k + 1)
     setTickIdx(t => dir === 'next' ? (t + 1) % 5 : (t + 4) % 5)
     setHasNavigated(true)
+    // Scroll back to top for the incoming poem
+    if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0
     setTimeout(() => { transitioning.current = false }, 600)
   }, [currentIdx, queue.length])
 
@@ -222,8 +225,15 @@ export default function PoemReader({ poems }: Props) {
 
     if (longPressFired.current) return
 
+    // Only navigate when the scroll container is at its boundary —
+    // don't hijack scrolling mid-poem
+    const scrollEl = scrollContainerRef.current
+    const atTop    = !scrollEl || scrollEl.scrollTop <= 2
+    const atBottom = !scrollEl || scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 2
+
     if (Math.abs(dy) > dx && Math.abs(dy) > 50) {
-      navigate(dy < 0 ? 'next' : 'prev')
+      if (dy < 0 && atBottom) navigate('next')   // swipe up at bottom → next poem
+      if (dy > 0 && atTop)    navigate('prev')   // swipe down at top → prev poem
     }
   }
 
@@ -304,12 +314,14 @@ export default function PoemReader({ poems }: Props) {
 
       {/* Poem — safe-area-aware padding */}
       <div
-        className="flex-1 flex flex-col items-center overflow-hidden"
+        ref={scrollContainerRef}
+        className="flex-1 flex flex-col items-center overflow-y-auto"
         style={{
           paddingTop:    'max(22vh, calc(env(safe-area-inset-top) + 80px))',
           paddingBottom: 'calc(env(safe-area-inset-bottom) + 80px)',
           transform:     `translateY(${pullTranslate}px)`,
           transition:    pullY === 0 ? 'transform 300ms ease' : 'none',
+          WebkitOverflowScrolling: 'touch',
         }}
       >
         <AnimatePresence mode="wait">
@@ -332,7 +344,7 @@ export default function PoemReader({ poems }: Props) {
                 </h1>
               )}
 
-              {/* Body — stanza-aware truncation */}
+              {/* Body — full poem, no truncation */}
               <div
                 className="font-serif text-center max-w-poem mx-auto"
                 style={{
@@ -342,38 +354,7 @@ export default function PoemReader({ poems }: Props) {
                   whiteSpace: 'pre-wrap',
                 }}
               >
-                {(() => {
-                  const stanzas   = poem.content.split(/\n\s*\n/)
-                  const MAX_LINES = 9
-                  const shown: string[] = []
-                  let lineCount = 0
-                  for (const stanza of stanzas) {
-                    const lines = stanza.split('\n').length
-                    if (lineCount + lines > MAX_LINES) break
-                    shown.push(stanza)
-                    lineCount += lines
-                  }
-                  const body    = shown.length > 0
-                    ? shown.join('\n\n')
-                    : poem.content.split('\n').slice(0, 6).join('\n')
-                  const clipped = body.length < poem.content.trim().length
-                  return (
-                    <>
-                      {body}
-                      {clipped && (
-                        <span style={{
-                          display:       'block',
-                          marginTop:     '12px',
-                          color:         '#A89F8C',
-                          fontSize:      '14px',
-                          letterSpacing: '0.3em',
-                        }}>
-                          · · ·
-                        </span>
-                      )}
-                    </>
-                  )
-                })()}
+                {poem.content}
               </div>
 
               {/* Attribution */}

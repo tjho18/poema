@@ -44,3 +44,13 @@ export interface PoemRef {
   author_username: string
   author_display_name: string | null
 }
+
+// A short "margin note" left on a poem by a reader.
+export interface PoemComment {
+  id: string
+  body: string
+  created_at: string
+  author_username: string
+  author_display_name: string | null
+  author_id: string
+}

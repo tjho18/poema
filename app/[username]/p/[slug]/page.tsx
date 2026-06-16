@@ -1,13 +1,25 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { getPoetByUsername, getPoemByAuthorAndSlug, getRespondingTo, getResponses } from '@/lib/queries'
+import {
+  getPoetByUsername,
+  getPoemByAuthorAndSlug,
+  getRespondingTo,
+  getResponses,
+  getComments,
+  getLikeCount,
+  getViewerLiked,
+} from '@/lib/queries'
+import { getCurrentProfile } from '@/lib/auth'
 import NavBar from '@/components/NavBar'
 import GradientBackground from '@/components/GradientBackground'
 import PoemDisplay from '@/components/PoemDisplay'
 import ShareButton from '@/components/ShareButton'
 import AudioPlayer from '@/components/AudioPlayer'
 import RespondButton from '@/components/RespondButton'
+import LikeButton from '@/components/LikeButton'
+import CommentComposer from '@/components/CommentComposer'
+import DeleteNoteButton from '@/components/DeleteNoteButton'
 import type { RespondingTo } from '@/contexts/WriteSheetContext'
 
 interface Props {
@@ -45,9 +57,19 @@ export default async function PoemDetailPage({ params }: Props) {
   const poem = await getPoemByAuthorAndSlug(poet.id, slug)
   if (!poem) notFound()
 
-  const [respondingTo, responses] = await Promise.all([
+  const { user } = await getCurrentProfile()
+  const viewerId = user?.id ?? null
+  const viewerIsAuthor = viewerId === poet.id
+
+  const [respondingTo, responses, comments, likeData] = await Promise.all([
     poem.responding_to_poem_id ? getRespondingTo(poem.responding_to_poem_id) : null,
     getResponses(poem.id),
+    getComments(poem.id),
+    viewerIsAuthor
+      ? getLikeCount(poem.id).then(count => ({ count }))
+      : viewerId
+        ? getViewerLiked(poem.id, viewerId).then(liked => ({ liked }))
+        : Promise.resolve({ liked: false }),
   ])
 
   const displayName = poet.display_name || poet.username
@@ -113,6 +135,11 @@ export default async function PoemDetailPage({ params }: Props) {
           >
             ← all poems
           </Link>
+          {'count' in likeData ? (
+            <LikeButton poemId={poem.id} count={likeData.count} />
+          ) : (
+            <LikeButton poemId={poem.id} viewerId={viewerId} initialLiked={likeData.liked} />
+          )}
           <ShareButton title={poem.title || poem.content.split('\n').find(l => l.trim()) || 'a poem'} poet={displayName ?? poet.username ?? ''} />
           <Link
             href={`/${poet.username}`}
@@ -120,6 +147,43 @@ export default async function PoemDetailPage({ params }: Props) {
           >
             surprise me →
           </Link>
+        </div>
+
+        {/* Margin notes — short reader reactions, distinct from poem responses */}
+        <div className="mt-16 max-w-sm mx-auto">
+          {comments.length > 0 && (
+            <>
+              <p
+                className="text-center font-body italic mb-8"
+                style={{ fontSize: '11px', color: 'rgba(27,26,46,0.30)', letterSpacing: '0.06em' }}
+              >
+                notes
+              </p>
+              <div className="flex flex-col gap-6 mb-10">
+                {comments.map(c => {
+                  const canDelete = viewerIsAuthor || c.author_id === viewerId
+                  return (
+                    <div key={c.id} className="border-l border-ink-text/10 pl-4">
+                      <p className="font-body italic text-sm text-ink-text/75 leading-relaxed whitespace-pre-line">
+                        {c.body}
+                      </p>
+                      <p className="font-body italic text-[11px] text-ink-muted/40 tracking-wider mt-1.5">
+                        —{' '}
+                        <Link
+                          href={`/${c.author_username}`}
+                          className="hover:text-ink-muted transition-colors"
+                        >
+                          {(c.author_display_name || c.author_username).toLowerCase()}
+                        </Link>
+                        {canDelete && <DeleteNoteButton commentId={c.id} />}
+                      </p>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          )}
+          <CommentComposer poemId={poem.id} viewerId={viewerId} />
         </div>
 
         {/* Respond button */}
