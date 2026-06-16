@@ -34,16 +34,16 @@ export default function ExploreClient({ poems, voiceCount }: Props) {
   return (
     <div className="min-h-screen bg-parchment pb-24">
       {/* Header */}
-      <div className="px-4 pt-12 pb-4">
+      <div className="px-4 pt-12 pb-4 max-w-2xl mx-auto w-full">
         <h1
-          className="font-serif italic"
-          style={{ fontSize: '22px', lineHeight: '30px', color: '#1B1A2E' }}
+          className="font-serif italic text-[22px] leading-[30px] sm:text-[34px] sm:leading-[42px]"
+          style={{ color: '#1B1A2E' }}
         >
           Explore
         </h1>
         <p
-          className="font-serif font-serif--ui mt-1"
-          style={{ fontSize: '12px', color: '#A89F8C' }}
+          className="font-serif font-serif--ui mt-1 text-[12px] sm:text-[14px]"
+          style={{ color: '#A89F8C' }}
         >
           {voiceCount} {voiceCount === 1 ? 'voice' : 'voices'}
         </p>
@@ -59,14 +59,13 @@ export default function ExploreClient({ poems, voiceCount }: Props) {
         }}
       >
         {/* Tabs */}
-        <div className="flex px-4 gap-0" style={{ borderBottom: '0.5px solid rgba(27,26,46,0.08)' }}>
+        <div className="flex px-4 gap-0 max-w-2xl mx-auto" style={{ borderBottom: '0.5px solid rgba(27,26,46,0.08)' }}>
           {(['all', 'new'] as Tab[]).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className="font-serif italic"
+              className="font-serif italic text-[13px] sm:text-[15px]"
               style={{
-                fontSize:      '13px',
                 padding:       '10px 16px 8px',
                 background:    'none',
                 border:        'none',
@@ -84,7 +83,7 @@ export default function ExploreClient({ poems, voiceCount }: Props) {
         </div>
 
         {/* Mood filter — on both tabs */}
-        <div className="py-3">
+        <div className="py-3 max-w-2xl mx-auto">
           <MoodFilter active={activeMood} onChange={setActiveMood} />
         </div>
       </div>
@@ -98,7 +97,7 @@ export default function ExploreClient({ poems, voiceCount }: Props) {
           {activeMood ? 'No poems in this mood yet.' : 'No poems yet.'}
         </p>
       ) : (
-        <div className="px-4 flex flex-col gap-3 pt-4">
+        <div className="px-4 flex flex-col gap-3 pt-4 max-w-2xl mx-auto w-full">
           {/* Discovery tab leads with a featured card */}
           {tab === 'all' && featured && (
             <div style={{ marginRight: '8px' }}>
