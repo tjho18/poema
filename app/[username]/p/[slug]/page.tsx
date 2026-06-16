@@ -20,6 +20,7 @@ import RespondButton from '@/components/RespondButton'
 import LikeButton from '@/components/LikeButton'
 import CommentComposer from '@/components/CommentComposer'
 import DeleteNoteButton from '@/components/DeleteNoteButton'
+import NoteReply from '@/components/NoteReply'
 import type { RespondingTo } from '@/contexts/WriteSheetContext'
 
 interface Props {
@@ -159,24 +160,60 @@ export default async function PoemDetailPage({ params }: Props) {
               >
                 notes
               </p>
-              <div className="flex flex-col gap-6 mb-10">
-                {comments.map(c => {
-                  const canDelete = viewerIsAuthor || c.author_id === viewerId
+              <div className="flex flex-col gap-8 mb-10">
+                {comments.map(note => {
+                  const noteCanDelete = viewerIsAuthor || note.author_id === viewerId
+                  const canReply = !!viewerId && (viewerIsAuthor || note.author_id === viewerId)
                   return (
-                    <div key={c.id} className="border-l border-ink-text/10 pl-4">
+                    <div key={note.id} className="border-l border-ink-text/10 pl-4">
+                      {/* The note */}
                       <p className="font-body italic text-sm text-ink-text/75 leading-relaxed whitespace-pre-line">
-                        {c.body}
+                        {note.body}
                       </p>
                       <p className="font-body italic text-[11px] text-ink-muted/40 tracking-wider mt-1.5">
                         —{' '}
                         <Link
-                          href={`/${c.author_username}`}
+                          href={`/${note.author_username}`}
                           className="hover:text-ink-muted transition-colors"
                         >
-                          {(c.author_display_name || c.author_username).toLowerCase()}
+                          {(note.author_display_name || note.author_username).toLowerCase()}
                         </Link>
-                        {canDelete && <DeleteNoteButton commentId={c.id} />}
+                        {noteCanDelete && <DeleteNoteButton commentId={note.id} />}
                       </p>
+
+                      {/* Replies — poet ⇄ reader thread (poet shown in terracotta) */}
+                      {note.replies.length > 0 && (
+                        <div className="mt-4 ml-3 pl-4 border-l border-ink-text/[0.07] flex flex-col gap-4">
+                          {note.replies.map(r => {
+                            const rCanDelete = viewerIsAuthor || r.author_id === viewerId
+                            const isPoet = r.author_id === poet.id
+                            return (
+                              <div key={r.id}>
+                                <p className="font-body italic text-sm text-ink-text/70 leading-relaxed whitespace-pre-line">
+                                  {r.body}
+                                </p>
+                                <p
+                                  className="font-body italic text-[11px] tracking-wider mt-1.5"
+                                  style={{ color: isPoet ? '#B97A55' : 'rgba(27,26,46,0.40)' }}
+                                >
+                                  —{' '}
+                                  <Link href={`/${r.author_username}`} className="hover:opacity-70 transition-opacity">
+                                    {(r.author_display_name || r.author_username).toLowerCase()}
+                                  </Link>
+                                  {rCanDelete && <DeleteNoteButton commentId={r.id} />}
+                                </p>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+
+                      {/* Reply affordance — only poet or the note's author */}
+                      {canReply && (
+                        <div className="mt-3 ml-3 pl-4">
+                          <NoteReply poemId={poem.id} parentId={note.id} viewerId={viewerId!} />
+                        </div>
+                      )}
                     </div>
                   )
                 })}

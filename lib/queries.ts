@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server'
-import type { Poem, PublicPoem, Prompt, PoemRef, PoemComment } from '@/types/poem'
+import type { Poem, PublicPoem, Prompt, PoemRef, PoemComment, ThreadedComment } from '@/types/poem'
 import type { Profile } from '@/types/profile'
 
 // Platform-wide feed: latest published poems across all poets.
@@ -132,12 +132,13 @@ export async function getResponses(poemId: string): Promise<PublicPoem[]> {
   return (data as PublicPoem[]) ?? []
 }
 
-// Margin notes (comments) on a poem, oldest first, with author names embedded.
-export async function getComments(poemId: string): Promise<PoemComment[]> {
+// Margin notes (comments) on a poem, threaded: top-level notes oldest-first,
+// each with its replies (poet ⇄ reader) nested oldest-first beneath it.
+export async function getComments(poemId: string): Promise<ThreadedComment[]> {
   const supabase = await createServerSupabaseClient()
   const { data } = await supabase
     .from('comments')
-    .select('id, body, created_at, author_id, author:profiles(username, display_name)')
+    .select('id, body, created_at, author_id, parent_id, author:profiles(username, display_name)')
     .eq('poem_id', poemId)
     .order('created_at', { ascending: true })
 
@@ -146,17 +147,33 @@ export async function getComments(poemId: string): Promise<PoemComment[]> {
     body: string
     created_at: string
     author_id: string
+    parent_id: string | null
     author: { username: string; display_name: string | null } | null
   }
 
-  return ((data as Row[] | null) ?? []).map(r => ({
+  const flat: PoemComment[] = ((data as Row[] | null) ?? []).map(r => ({
     id:                  r.id,
     body:                r.body,
     created_at:          r.created_at,
     author_id:           r.author_id,
+    parent_id:           r.parent_id,
     author_username:     r.author?.username ?? '',
     author_display_name: r.author?.display_name ?? null,
   }))
+
+  // Group replies under their parent note.
+  const repliesByParent = new Map<string, PoemComment[]>()
+  for (const c of flat) {
+    if (c.parent_id) {
+      const arr = repliesByParent.get(c.parent_id) ?? []
+      arr.push(c)
+      repliesByParent.set(c.parent_id, arr)
+    }
+  }
+
+  return flat
+    .filter(c => !c.parent_id)
+    .map(top => ({ ...top, replies: repliesByParent.get(top.id) ?? [] }))
 }
 
 // Number of likes on a poem. RLS means a non-zero result only comes back

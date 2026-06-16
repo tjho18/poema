@@ -53,4 +53,10 @@ export interface PoemComment {
   author_username: string
   author_display_name: string | null
   author_id: string
+  parent_id: string | null
+}
+
+// A top-level note plus any replies (poet ⇄ reader thread).
+export interface ThreadedComment extends PoemComment {
+  replies: PoemComment[]
 }
