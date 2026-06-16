@@ -1,29 +1,34 @@
 'use client'
 
-import { useState } from 'react'
-import Link from 'next/link'
+import { useMemo, useState } from 'react'
 import PoemCard from '@/components/PoemCard'
 import MoodFilter, { type Mood } from '@/components/MoodFilter'
-import type { PublicPoem, Prompt } from '@/types/poem'
+import type { PublicPoem } from '@/types/poem'
 
-type Tab = 'all' | 'today'
+type Tab = 'all' | 'new'
 
 interface Props {
-  poems:        PublicPoem[]
-  voiceCount:   number
-  todayPrompt:  Prompt | null
-  promptPoems:  PublicPoem[]
+  poems:      PublicPoem[]   // newest-first
+  voiceCount: number
 }
 
-export default function ExploreClient({ poems, voiceCount, todayPrompt, promptPoems }: Props) {
+export default function ExploreClient({ poems, voiceCount }: Props) {
   const [tab,        setTab       ] = useState<Tab>('all')
   const [activeMood, setActiveMood] = useState<Mood | null>(null)
 
-  const filtered = activeMood
-    ? poems.filter(p => p.tags?.some(t => t.toLowerCase() === activeMood))
-    : poems
+  // Shuffle once for the discovery ("all") tab; "new" keeps chronological order.
+  const shuffled = useMemo(
+    () => [...poems].map(p => ({ p, s: Math.random() })).sort((a, b) => a.s - b.s).map(({ p }) => p),
+    [poems],
+  )
 
-  const showDark = filtered.length > 1
+  const base = tab === 'all' ? shuffled : poems
+  const filtered = activeMood
+    ? base.filter(p => p.tags?.some(t => t.toLowerCase() === activeMood))
+    : base
+
+  // Featured "dark" card only on the discovery tab.
+  const showDark = tab === 'all' && filtered.length > 1
   const [featured, ...rest] = filtered
 
   return (
@@ -40,7 +45,7 @@ export default function ExploreClient({ poems, voiceCount, todayPrompt, promptPo
           className="font-serif font-serif--ui mt-1"
           style={{ fontSize: '12px', color: '#A89F8C' }}
         >
-          {voiceCount} {voiceCount === 1 ? 'voice' : 'voices'} · today
+          {voiceCount} {voiceCount === 1 ? 'voice' : 'voices'}
         </p>
       </div>
 
@@ -55,7 +60,7 @@ export default function ExploreClient({ poems, voiceCount, todayPrompt, promptPo
       >
         {/* Tabs */}
         <div className="flex px-4 gap-0" style={{ borderBottom: '0.5px solid rgba(27,26,46,0.08)' }}>
-          {(['all', 'today'] as Tab[]).map(t => (
+          {(['all', 'new'] as Tab[]).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -73,92 +78,38 @@ export default function ExploreClient({ poems, voiceCount, todayPrompt, promptPo
                 transition:    'color 150ms ease',
               }}
             >
-              {t === 'today' && todayPrompt ? "today’s prompt" : t}
+              {t}
             </button>
           ))}
         </div>
 
-        {/* Mood filter — only on "all" tab */}
-        {tab === 'all' && (
-          <div className="py-3">
-            <MoodFilter active={activeMood} onChange={setActiveMood} />
-          </div>
-        )}
+        {/* Mood filter — on both tabs */}
+        <div className="py-3">
+          <MoodFilter active={activeMood} onChange={setActiveMood} />
+        </div>
       </div>
 
-      {/* ── All tab ── */}
-      {tab === 'all' && (
-        filtered.length === 0 ? (
-          <p
-            className="text-center font-serif italic mt-20"
-            style={{ color: '#A89F8C', fontSize: '15px' }}
-          >
-            No poems in this mood yet.
-          </p>
-        ) : (
-          <div className="px-4 flex flex-col gap-3 pt-4">
-            {featured && (
-              <div style={{ marginRight: '8px' }}>
-                <PoemCard poem={featured} variant={showDark ? 'dark' : 'light'} />
-              </div>
-            )}
-            {rest.map(poem => (
-              <div key={poem.id} style={{ marginRight: '8px' }}>
-                <PoemCard poem={poem} variant="light" />
-              </div>
-            ))}
-          </div>
-        )
-      )}
-
-      {/* ── Today's prompt tab ── */}
-      {tab === 'today' && (
-        <div className="px-4 pt-6">
-          {todayPrompt ? (
-            <>
-              {/* Prompt display */}
-              <div
-                className="text-center mb-10"
-                style={{ padding: '24px 20px', borderRadius: '12px', background: 'rgba(185,122,85,0.06)', border: '0.5px solid rgba(185,122,85,0.15)' }}
-              >
-                <p
-                  className="font-serif italic"
-                  style={{ fontSize: '11px', color: 'rgba(27,26,46,0.35)', letterSpacing: '0.06em', marginBottom: '8px' }}
-                >
-                  today's prompt
-                </p>
-                <p
-                  className="font-serif italic"
-                  style={{ fontSize: '20px', lineHeight: '30px', color: '#1B1A2E' }}
-                >
-                  {todayPrompt.text}
-                </p>
-              </div>
-
-              {/* Responses */}
-              {promptPoems.length === 0 ? (
-                <p
-                  className="text-center font-serif italic mt-12"
-                  style={{ color: '#A89F8C', fontSize: '14px' }}
-                >
-                  Be the first to respond.
-                </p>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  {promptPoems.map(poem => (
-                    <PoemCard key={poem.id} poem={poem} variant="light" />
-                  ))}
-                </div>
-              )}
-            </>
-          ) : (
-            <p
-              className="text-center font-serif italic mt-20"
-              style={{ color: '#A89F8C', fontSize: '15px' }}
-            >
-              No prompt today — write freely.
-            </p>
+      {/* Poem list */}
+      {filtered.length === 0 ? (
+        <p
+          className="text-center font-serif italic mt-20"
+          style={{ color: '#A89F8C', fontSize: '15px' }}
+        >
+          {activeMood ? 'No poems in this mood yet.' : 'No poems yet.'}
+        </p>
+      ) : (
+        <div className="px-4 flex flex-col gap-3 pt-4">
+          {/* Discovery tab leads with a featured card */}
+          {tab === 'all' && featured && (
+            <div style={{ marginRight: '8px' }}>
+              <PoemCard poem={featured} variant={showDark ? 'dark' : 'light'} />
+            </div>
           )}
+          {(tab === 'all' ? rest : filtered).map(poem => (
+            <div key={poem.id} style={{ marginRight: '8px' }}>
+              <PoemCard poem={poem} variant="light" />
+            </div>
+          ))}
         </div>
       )}
     </div>
