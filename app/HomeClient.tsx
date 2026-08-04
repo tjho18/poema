@@ -5,6 +5,7 @@ import GradientBackground from '@/components/GradientBackground'
 import NavBar from '@/components/NavBar'
 import PoemDisplay from '@/components/PoemDisplay'
 import type { Poem } from '@/types/poem'
+import { poemTitle, poemTags } from '@/types/poem'
 
 interface Props {
   poems: Poem[]
@@ -51,9 +52,9 @@ export default function HomeClient({ poems, allTags }: Props) {
       <div className="flex-1 flex items-center justify-center w-full">
         {currentPoem ? (
           <PoemDisplay
-            title={currentPoem.title}
+            title={poemTitle(currentPoem)}
             content={currentPoem.content}
-            tags={currentPoem.tags}
+            tags={poemTags(currentPoem)}
             animate={true}
           />
         ) : null}

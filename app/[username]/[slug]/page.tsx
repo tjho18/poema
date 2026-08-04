@@ -1,30 +1,39 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { getPoem } from '@/lib/db'
+import { getPoemBySlug } from '@/lib/db'
 import { poemTitle, poemAuthor, poemTags } from '@/types/poem'
 import NavBar from '@/components/NavBar'
 import GradientBackground from '@/components/GradientBackground'
 import PoemDisplay from '@/components/PoemDisplay'
 
-// Reads the database at request time, so `next build` never needs a connection.
+/**
+ * `poema.app/{username}/{slug}` — the canonical public poem page.
+ *
+ * This is the URL the iOS app already builds when it shares a poem
+ * (`PoemWebConfig.poemURL`), so it is the route that has to exist before
+ * `servesPoemPages` can be flipped to true. `/poems/[id]` stays as a permalink
+ * for links that carry an id instead.
+ *
+ * Two dynamic segments this shallow will catch any two-part path, but Next
+ * matches literal segments first, so /explore, /admin/... and /collections/...
+ * are unaffected.
+ */
 export const dynamic = 'force-dynamic'
 
 interface Props {
-  params: Promise<{ id: string }>
+  params: Promise<{ username: string; slug: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params
-  const poem = await getPoem(id)
+  const { username, slug } = await params
+  const poem = await getPoemBySlug(username, slug)
   if (!poem) return { title: 'Poem not found — Poema' }
 
   const title = poemTitle(poem)
   const author = poemAuthor(poem)
   const firstLine = poem.content.split('\n').find(line => line.trim()) ?? ''
 
-  // The card a shared link unfurls into, which is the whole point of this page:
-  // a poem shared out of the app should arrive looking like a poem.
   return {
     title: `${title} — ${author} — Poema`,
     description: firstLine,
@@ -37,9 +46,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function PoemPage({ params }: Props) {
-  const { id } = await params
-  const poem = await getPoem(id)
+export default async function PoemBySlugPage({ params }: Props) {
+  const { username, slug } = await params
+  const poem = await getPoemBySlug(username, slug)
   if (!poem) notFound()
 
   return (
@@ -56,8 +65,6 @@ export default async function PoemPage({ params }: Props) {
           showTags={true}
         />
 
-        {/* The poem is by somebody. A single-author site never had to say so; a
-            library of many poets does. */}
         <p className="mt-10 text-center font-body italic text-sm text-ink-muted">
           — {poemAuthor(poem).toLowerCase()}
         </p>

@@ -5,6 +5,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import AdminLoginForm from '@/components/AdminLoginForm'
 import DeletePoemButton from '@/components/DeletePoemButton'
 import type { Poem } from '@/types/poem'
+import { poemTitle, poemTags } from '@/types/poem'
 
 export default async function AdminPage() {
   const supabase = await createServerSupabaseClient()
@@ -89,10 +90,10 @@ export default async function AdminPage() {
                 >
                   <div className="min-w-0 flex-1 mr-4">
                     <p className="font-display italic font-semibold text-ink-text truncate">
-                      {poem.title}
+                      {poemTitle(poem)}
                     </p>
                     <div className="flex gap-3 mt-1 flex-wrap">
-                      {poem.tags.map((tag: string) => (
+                      {poemTags(poem).map((tag: string) => (
                         <span key={tag} className="font-body italic text-xs text-ink-muted/70">
                           [{tag}]
                         </span>
@@ -121,7 +122,7 @@ export default async function AdminPage() {
                     </Link>
                     <form action={deletePoem}>
                       <input type="hidden" name="id" value={poem.id} />
-                      <DeletePoemButton title={poem.title} />
+                      <DeletePoemButton title={poemTitle(poem)} />
                     </form>
                   </div>
                 </div>
