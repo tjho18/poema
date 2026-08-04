@@ -1,5 +1,5 @@
 import { neon } from '@neondatabase/serverless'
-import type { Poem, PoemCollection } from '@/types/poem'
+import type { Poem, PoemCollection, Poet } from '@/types/poem'
 
 /**
  * Reads the iOS app's database directly.
@@ -70,6 +70,33 @@ export async function getPoemBySlug(
     limit 1
   `) as Poem[]
   return rows[0] ?? null
+}
+
+/**
+ * A poet by handle — the page a shared poet link lands on.
+ *
+ * Case-insensitive, as the app matches handles. Selects only the columns a poet
+ * page shows; `profiles` has nothing secret in it, but naming the columns keeps
+ * it that way as the table grows.
+ */
+export async function getPoet(username: string): Promise<Poet | null> {
+  const rows = (await sql()`
+    select id, username, display_name, bio, avatar_url, website, social_links, tip_url
+    from profiles
+    where lower(username) = lower(${username})
+    limit 1
+  `) as Poet[]
+  return rows[0] ?? null
+}
+
+/** A poet's published poems, newest first. */
+export async function getPoemsByPoet(username: string, limit = 60): Promise<Poem[]> {
+  return (await sql()`
+    select * from public_poems
+    where lower(author_username) = lower(${username})
+    order by published_at desc nulls last, created_at desc
+    limit ${limit}
+  `) as Poem[]
 }
 
 export async function getPoems(limit = 60): Promise<Poem[]> {

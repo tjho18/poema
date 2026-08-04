@@ -45,3 +45,22 @@ export function poemAuthor(poem: Poem): string {
 export function poemTags(poem: Poem): string[] {
   return poem.tags ?? []
 }
+
+/**
+ * A poet, as a row of `profiles`. Only what a poet page shows — the app already
+ * displays every one of these publicly, and nothing else is selected.
+ */
+export interface Poet {
+  id: string
+  username: string | null
+  display_name: string | null
+  bio: string | null
+  avatar_url: string | null
+  website: string | null
+  social_links: Record<string, string> | null
+  tip_url: string | null
+}
+
+export function poetName(poet: Poet): string {
+  return poet.display_name ?? poet.username ?? 'poet'
+}
