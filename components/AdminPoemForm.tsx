@@ -11,7 +11,7 @@ interface Props {
 
 export default function AdminPoemForm({ initialData, action, submitLabel }: Props) {
   const [tagsInput, setTagsInput] = useState(
-    initialData?.tags.join(', ') ?? ''
+    initialData?.tags?.join(', ') ?? ''
   )
 
   return (

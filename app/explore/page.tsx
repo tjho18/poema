@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { getPoems, getPoemsByTag, getAllTags } from '@/lib/db'
 import NavBar from '@/components/NavBar'
 import GradientBackground from '@/components/GradientBackground'
 import PoemCard from '@/components/PoemCard'
@@ -14,19 +14,10 @@ interface Props {
 export default async function ExplorePage({ searchParams }: Props) {
   const { tag } = await searchParams
   const activeTag = tag ?? ''
-  const supabase = await createServerSupabaseClient()
-
-  let query = supabase.from('poems').select('*').order('created_at', { ascending: false })
-  if (activeTag) {
-    query = query.contains('tags', [activeTag])
-  }
-
-  const { data, error } = await query
-  const poems: Poem[] = error ? [] : (data ?? [])
-
-  // Fetch all tags (we need the full set regardless of current filter)
-  const { data: allData } = await supabase.from('poems').select('tags')
-  const allTags = [...new Set((allData ?? []).flatMap((p: { tags: string[] }) => p.tags))].sort()
+  // Newest first, from the same database the app publishes into.
+  const poems: Poem[] = activeTag ? await getPoemsByTag(activeTag) : await getPoems()
+  // The full set regardless of the current filter, so the chips don't vanish.
+  const allTags = await getAllTags()
 
   return (
     <div className="min-h-screen px-6 py-24">
@@ -37,7 +28,7 @@ export default async function ExplorePage({ searchParams }: Props) {
         {/* Header */}
         <div className="mb-12 text-center">
           <h1 className="font-display text-3xl text-ink-accent mb-3 tracking-wide">
-            All Poems by TJ Ho
+            Poems
           </h1>
           <p className="font-body text-ink-muted text-sm">
             {poems.length} {poems.length === 1 ? 'poem' : 'poems'}

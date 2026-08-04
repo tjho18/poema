@@ -2,7 +2,45 @@
 
 A personal interactive poetry platform. Minimalist, cinematic, ink-on-paper aesthetic.
 
-**Stack:** Next.js 14 (App Router) · Tailwind CSS · Supabase (auth + database) · Vercel
+**Stack:** Next.js (App Router) · Tailwind CSS · Neon Postgres (public pages) · Supabase (admin auth) · Vercel
+
+---
+
+## Reading the iOS app's poems
+
+The public pages — `/`, `/explore`, `/poems/[id]`, `/collections/[id]` — read the
+same Neon database the Poema iOS app publishes into, over a **direct Postgres
+connection** from the server (`lib/db.ts`).
+
+Not through Neon's Data API, which the app uses. That API requires a JWT on every
+request:
+
+```
+HTTP 400 — missing authentication credentials: required authorization bearer token in JWT format
+```
+
+A visitor following a shared link has no account, so there is no token to send.
+The app mints one from its Better Auth session; a stranger has nothing to mint
+from. A direct connection has no such requirement, and it only ever runs on the
+server, so the credential never reaches a browser.
+
+Because that connection is made as the database owner, **row level security does
+not apply** — so every query in `lib/db.ts` scopes itself deliberately, reads the
+`public_poems` view rather than `poems`, and never returns a draft or anyone's
+private row.
+
+### Environment variable
+
+```
+DATABASE_URL=postgresql://...
+```
+
+The Neon connection string for the same project the iOS app uses — Neon console →
+your project → **Connection Details**. Set it in Vercel as well as `.env.local`;
+the public pages throw a clear error without it.
+
+The Supabase variables below are still needed by the `/admin` pages, which have
+their own auth and their own (older) database.
 
 ---
 
