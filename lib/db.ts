@@ -51,6 +51,27 @@ export async function getPoem(id: string): Promise<Poem | null> {
   return rows[0] ?? null
 }
 
+/**
+ * The poem at `poema.app/{username}/{slug}` — the canonical public URL.
+ *
+ * This, not `/poems/[id]`, is the shape the iOS app builds when it shares a
+ * poem (`PoemWebConfig.poemURL`), so it is the one that has to exist for
+ * `servesPoemPages` to be flipped on. The id route stays as a permalink.
+ *
+ * Handles are matched case-insensitively, as the app matches them.
+ */
+export async function getPoemBySlug(
+  username: string,
+  slug: string
+): Promise<Poem | null> {
+  const rows = (await sql()`
+    select * from public_poems
+    where lower(author_username) = lower(${username}) and slug = ${slug}
+    limit 1
+  `) as Poem[]
+  return rows[0] ?? null
+}
+
 export async function getPoems(limit = 60): Promise<Poem[]> {
   return (await sql()`
     select * from public_poems

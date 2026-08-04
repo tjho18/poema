@@ -8,6 +8,7 @@
  */
 export interface Poem {
   id: string
+  slug: string | null
   title: string | null
   content: string
   tags: string[] | null
